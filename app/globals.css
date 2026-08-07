@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0a0f1e;
+  --gold: #d4af37;
+  --electric: #00d4ff;
+  --slate-surface: #111827;
+  --text-primary: #f9fafb;
+  --text-muted: #6b7280;
+  --success: #10b981;
+  --danger: #ef4444;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--navy);
+  color: var(--text-primary);
+}
+
+.light body {
+  background-color: #f9fafb;
+  color: #0a0f1e;
+}
+
+@layer components {
+  .glass-card {
+    @apply relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-glass shadow-glass;
+  }
+
+  .glass-card-gold {
+    @apply relative rounded-2xl border border-gold/30 bg-white/[0.04] backdrop-blur-glass shadow-gold;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-gold px-6 py-3 font-semibold text-navy transition-all hover:bg-gold-light hover:shadow-gold active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-6 py-3 font-semibold text-text-primary transition-all hover:bg-white/10 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-danger px-6 py-3 font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-text-primary placeholder:text-text-muted outline-none transition-all focus:border-gold/50 focus:ring-1 focus:ring-gold/50;
+  }
+
+  .risk-banner {
+    @apply w-full rounded-xl border border-gold/20 bg-gold/[0.06] px-4 py-3 text-sm text-text-muted;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium;
+  }
+  .badge-success {
+    @apply badge bg-success/15 text-success;
+  }
+  .badge-warning {
+    @apply badge bg-gold/15 text-gold;
+  }
+  .badge-danger {
+    @apply badge bg-danger/15 text-danger;
+  }
+  .badge-neutral {
+    @apply badge bg-white/10 text-text-muted;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-lg bg-white/5;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.5);
+}
