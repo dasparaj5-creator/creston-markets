@@ -46,7 +46,7 @@ exception when duplicate_object then null; end $$;
 -- ---------------------------------------------------------------------------
 create table if not exists plans (
   id uuid primary key default uuid_generate_v4(),
-  name text not null,                       -- Bronze, Silver, Gold
+  name text not null unique,                       -- Bronze, Silver, Gold
   min_deposit numeric not null,             -- 200, 350, 500
   description text,
   features jsonb default '[]'::jsonb,

@@ -51,23 +51,9 @@ function consoleLog(entry: LogEntry) {
 }
 
 async function persist(entry: LogEntry) {
-  // Only attempt DB persistence server-side to avoid exposing write access
-  // patterns / leaking service behavior to the client bundle unnecessarily.
+  // Server-only persistence now lives in lib/logger-server.ts so this
+  // shared file never references next/headers, even indirectly.
   if (typeof window !== "undefined") return;
-  try {
-    // Lazy require to avoid pulling server supabase client into client bundles.
-    const { createServiceClient } = await import("@/lib/supabase/server");
-    const supabase = createServiceClient();
-    await supabase.from("error_logs").insert({
-      level: entry.level,
-      message: entry.message,
-      context: entry.context ?? {},
-      user_id: entry.userId ?? null,
-      page: entry.page ?? null,
-    });
-  } catch {
-    // Never let logging failures break the app.
-  }
 }
 
 function log(level: LogLevel, message: string, context?: Record<string, unknown>, userId?: string, page?: string) {
