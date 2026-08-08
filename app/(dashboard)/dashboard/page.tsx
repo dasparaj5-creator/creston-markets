@@ -34,9 +34,12 @@ export default async function DashboardHomePage() {
         .limit(3),
     ]);
 
-  const liveSnapshot = (snapshots ?? []).find((s) => s.source === "mt5_api");
-  const portfolioValue = liveSnapshot?.balance ?? 0;
-  const totalReturn = liveSnapshot?.return_percent ?? 0;
+  const sortedSnapshots = (snapshots ?? [])
+    .slice()
+    .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
+  const latestSnapshot = sortedSnapshots[0];
+  const portfolioValue = latestSnapshot?.balance ?? 0;
+  const totalReturn = latestSnapshot?.return_percent ?? 0;
 
   const bonusEarned = (referrals ?? [])
     .filter((r) => getReferralDisplayStatus(r) === "paid")
@@ -57,7 +60,7 @@ export default async function DashboardHomePage() {
           icon={TrendingUp}
           label="Total Return"
           value={`${totalReturn.toFixed(2)}%`}
-          trend={liveSnapshot ? undefined : "Awaiting live data"}
+          trend={latestSnapshot ? undefined : "No statement yet"}
         />
         <KpiCard icon={Layers} label="Plan Status" value={plan?.name ?? "No Plan Selected"} />
         <KpiCard icon={Gift} label="Referral Bonus Earned" value={formatCurrency(bonusEarned)} />

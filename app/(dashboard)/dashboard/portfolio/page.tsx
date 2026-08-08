@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import KpiCard from "@/components/dashboard/KpiCard";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
+import AccountSummaryCard from "@/components/dashboard/AccountSummaryCard";
 import RiskBanner from "@/components/shared/RiskBanner";
 import Link from "next/link";
 
@@ -19,7 +20,11 @@ export default async function PortfolioPage() {
     supabase.from("plans").select("*").eq("is_active", true).order("min_deposit"),
   ]);
 
-  const liveSnapshot = (snapshots ?? []).find((s) => s.source === "mt5_api");
+  const sortedSnapshots = (snapshots ?? [])
+    .slice()
+    .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
+  const latestSnapshot = sortedSnapshots[0];
+  const hasLiveMt5 = sortedSnapshots.some((s) => s.source === "mt5_api");
 
   return (
     <div className="space-y-6">
@@ -29,69 +34,37 @@ export default async function PortfolioPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(liveSnapshot?.balance ?? 0)} />
-        <KpiCard icon={TrendingUp} label="Total Return" value={`${(liveSnapshot?.return_percent ?? 0).toFixed(2)}%`} />
+        <KpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(latestSnapshot?.balance ?? 0)} />
+        <KpiCard icon={TrendingUp} label="Total Return" value={`${(latestSnapshot?.return_percent ?? 0).toFixed(2)}%`} />
         <KpiCard icon={ArrowUpCircle} label="Current Plan" value={plan?.name ?? "None"} />
       </div>
 
       <PerformanceChart snapshots={snapshots ?? []} />
       <RiskBanner variant="compact" />
 
-      {/* Phase 1 placeholder notice */}
-      <div className="glass-card p-6">
-        <p className="text-sm text-text-primary/90">
-          Live PAMM performance data will sync automatically once MT5 connection is active. Current
-          figures are for demonstration purposes.
-        </p>
-      </div>
-
-      {/* MT5 Integration status card */}
-      <div className="glass-card flex items-center gap-4 border-electric/20 p-6">
-        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-electric/10 text-electric">
-          <Cpu className="h-5 w-5" />
-        </span>
-        <div>
-          <p className="text-sm font-semibold text-text-primary">MT5 Integration Status</p>
-          <p className="mt-0.5 text-xs text-text-muted">Coming in Phase 2 — not yet connected.</p>
+      {!hasLiveMt5 && (
+        <div className="glass-card p-6">
+          <p className="text-sm text-text-primary/90">
+            Your account figures are currently reviewed and recorded manually by our team. Live
+            MT5 syncing will replace this process once connected — your statements will look and
+            work exactly the same either way.
+          </p>
         </div>
-      </div>
+      )}
 
-      {/* Monthly statements table */}
-      <div className="glass-card p-6">
-        <h2 className="mb-4 text-sm font-semibold text-text-primary">Statements</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/10 text-xs uppercase text-text-muted">
-                <th className="pb-3 font-medium">Period</th>
-                <th className="pb-3 font-medium">Balance</th>
-                <th className="pb-3 font-medium">Return</th>
-                <th className="pb-3 font-medium">Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {snapshots && snapshots.length > 0 ? (
-                snapshots
-                  .filter((s) => s.source === "mt5_api")
-                  .map((s) => (
-                    <tr key={s.id} className="border-b border-white/5 last:border-0">
-                      <td className="py-3 text-text-primary/90">{formatDate(s.snapshot_date)}</td>
-                      <td className="py-3 text-text-primary/90">{formatCurrency(s.balance)}</td>
-                      <td className="py-3 text-text-primary/90">{s.return_percent.toFixed(2)}%</td>
-                      <td className="py-3"><span className="badge-success">Live</span></td>
-                    </tr>
-                  ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="py-6 text-center text-text-muted">
-                    No statements available yet. Statements will populate once live PAMM data is connected.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {!hasLiveMt5 && (
+        <div className="glass-card flex items-center gap-4 border-electric/20 p-6">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-electric/10 text-electric">
+            <Cpu className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-text-primary">MT5 Integration Status</p>
+            <p className="mt-0.5 text-xs text-text-muted">Coming soon — not yet connected.</p>
+          </div>
         </div>
-      </div>
+      )}
+
+      <AccountSummaryCard snapshots={snapshots ?? []} clientName={profile.full_name || profile.email} />
 
       {/* Plan upgrade */}
       <div className="glass-card p-6">

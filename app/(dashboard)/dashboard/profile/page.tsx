@@ -1,11 +1,17 @@
 import { ShieldOff } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import ProfileEditForm from "@/components/dashboard/ProfileEditForm";
 import ChangePasswordForm from "@/components/dashboard/ChangePasswordForm";
 import KycUpload from "@/components/dashboard/KycUpload";
 
 export default async function ProfilePage() {
   const profile = await requireUser();
+  const supabase = createClient();
+  const { data: kycDocuments } = await supabase
+    .from("kyc_documents")
+    .select("*")
+    .eq("user_id", profile.id);
 
   return (
     <div className="space-y-6">
@@ -16,7 +22,7 @@ export default async function ProfilePage() {
 
       <ProfileEditForm profile={profile} />
       <ChangePasswordForm />
-      <KycUpload userId={profile.id} currentStatus={profile.kyc_status} />
+      <KycUpload userId={profile.id} currentStatus={profile.kyc_status} existingDocuments={kycDocuments ?? []} />
 
       <div className="glass-card p-6">
         <h2 className="mb-4 text-sm font-semibold text-text-primary">Notification Preferences</h2>

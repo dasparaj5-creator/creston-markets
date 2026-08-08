@@ -1,5 +1,14 @@
 export type UserRole = "client" | "admin";
 export type KycStatus = "pending" | "approved" | "rejected";
+export type KycDocumentType =
+  | "personal_id"
+  | "aadhar_card"
+  | "license"
+  | "passport"
+  | "pan_card"
+  | "voter_id"
+  | "bank_statement";
+export type KycDocumentSide = "front" | "back";
 export type RequestStatus = "pending" | "approved" | "rejected";
 export type SnapshotSource = "mt5_api" | "reconciliation";
 export type ReferralBonusStatus = "pending" | "paid";
@@ -33,6 +42,15 @@ export interface UserProfile {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface KycDocument {
+  id: string;
+  user_id: string;
+  document_type: KycDocumentType;
+  side: KycDocumentSide;
+  file_path: string;
+  uploaded_at: string;
 }
 
 export interface Deposit {

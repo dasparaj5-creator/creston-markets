@@ -41,12 +41,23 @@ do $$ begin
   create type ticket_status_enum as enum ('open', 'in_progress', 'resolved');
 exception when duplicate_object then null; end $$;
 
+do $$ begin
+  create type kyc_document_type_enum as enum (
+    'personal_id', 'aadhar_card', 'license', 'passport',
+    'pan_card', 'voter_id', 'bank_statement'
+  );
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type kyc_document_side_enum as enum ('front', 'back');
+exception when duplicate_object then null; end $$;
+
 -- ---------------------------------------------------------------------------
 -- TABLE: plans
 -- ---------------------------------------------------------------------------
 create table if not exists plans (
   id uuid primary key default uuid_generate_v4(),
-  name text not null unique,                       -- Bronze, Silver, Gold
+  name text not null unique,                -- Bronze, Silver, Gold
   min_deposit numeric not null,             -- 200, 350, 500
   description text,
   features jsonb default '[]'::jsonb,
@@ -67,7 +78,7 @@ create table if not exists users (
   referred_by uuid references users(id),
   role user_role not null default 'client',
   kyc_status kyc_status_enum not null default 'pending',
-  kyc_document_url text,
+  kyc_document_url text,  -- deprecated, kept for backward compat; use kyc_documents table
   plan_id uuid references plans(id),
   plan_activated_at timestamptz,
   account_active_since timestamptz,         -- set when first deposit approved
@@ -78,6 +89,25 @@ create table if not exists users (
 
 create index if not exists idx_users_referred_by on users(referred_by);
 create index if not exists idx_users_referral_code on users(referral_code);
+
+-- ---------------------------------------------------------------------------
+-- TABLE: kyc_documents
+-- Client selects 2 document types (e.g. Passport + Bank Statement), and
+-- uploads front + back for each -- up to 4 files total. Each row is one
+-- uploaded file; (user_id, document_type, side) is unique so a re-upload
+-- replaces rather than duplicates.
+-- ---------------------------------------------------------------------------
+create table if not exists kyc_documents (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id) on delete cascade,
+  document_type kyc_document_type_enum not null,
+  side kyc_document_side_enum not null,
+  file_path text not null,
+  uploaded_at timestamptz default now()
+);
+
+create index if not exists idx_kyc_documents_user on kyc_documents(user_id);
+create unique index if not exists uq_kyc_document_per_side on kyc_documents(user_id, document_type, side);
 
 -- ---------------------------------------------------------------------------
 -- TABLE: deposits
@@ -254,6 +284,7 @@ alter table support_tickets enable row level security;
 alter table error_logs enable row level security;
 alter table admin_audit_log enable row level security;
 alter table plans enable row level security;
+alter table kyc_documents enable row level security;
 
 -- helper: is current user an admin
 create or replace function is_admin() returns boolean as $$
@@ -290,10 +321,13 @@ create policy "withdrawals_insert_self" on withdrawals for insert
 create policy "withdrawals_admin_update" on withdrawals for update
   using (is_admin());
 
--- portfolio_snapshots: client can only ever see mt5_api rows for themself;
--- reconciliation rows are admin-only (enforced here, not just in UI)
-create policy "snapshots_select_self_mt5_or_admin" on portfolio_snapshots for select
-  using ( (auth.uid() = user_id and source = 'mt5_api') or is_admin() );
+-- portfolio_snapshots: client can see their own rows regardless of source.
+-- As of the operator's confirmed Phase 1 operating model, admin-entered
+-- 'reconciliation' snapshots ARE the real account statements until MT5 is
+-- connected -- they are manually verified by admin and intentionally
+-- surfaced to the client, not just an internal-only record anymore.
+create policy "snapshots_select_self_or_admin" on portfolio_snapshots for select
+  using ( auth.uid() = user_id or is_admin() );
 create policy "snapshots_admin_write" on portfolio_snapshots for insert
   with check (is_admin());
 create policy "snapshots_admin_update" on portfolio_snapshots for update
@@ -322,6 +356,14 @@ create policy "tickets_select_self_or_admin" on support_tickets for select
 create policy "tickets_insert_self" on support_tickets for insert
   with check (auth.uid() = user_id);
 create policy "tickets_update_self_or_admin" on support_tickets for update
+  using (auth.uid() = user_id or is_admin());
+
+-- kyc_documents: self + admin
+create policy "kyc_documents_select_self_or_admin" on kyc_documents for select
+  using (auth.uid() = user_id or is_admin());
+create policy "kyc_documents_insert_self" on kyc_documents for insert
+  with check (auth.uid() = user_id);
+create policy "kyc_documents_delete_self_or_admin" on kyc_documents for delete
   using (auth.uid() = user_id or is_admin());
 
 -- error_logs: admin only

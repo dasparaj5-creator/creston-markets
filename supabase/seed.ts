@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
+
 /**
  * Creston Markets — Seed script
  * Creates: 3 plans, referral config ($25 / 30 days), 1 admin, 3 sample
@@ -8,8 +9,6 @@ config({ path: ".env.local" });
  * Run with: npm run seed
  * Requires SUPABASE_SERVICE_ROLE_KEY in .env (service role bypasses RLS).
  */
-import { config } from "dotenv";
-config({ path: ".env.local" });
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

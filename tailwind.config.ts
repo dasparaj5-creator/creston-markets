@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy: "#0A0F1E",
+        navy: "rgb(var(--color-navy) / <alpha-value>)",
         gold: {
           DEFAULT: "#D4AF37",
           light: "#E4C766",
@@ -17,12 +17,12 @@ const config: Config = {
         },
         electric: "#00D4FF",
         slate: {
-          surface: "#111827",
+          surface: "rgb(var(--color-slate-surface) / <alpha-value>)",
         },
         success: "#10B981",
         danger: "#EF4444",
-        "text-primary": "#F9FAFB",
-        "text-muted": "#6B7280",
+        "text-primary": "rgb(var(--color-text-primary) / <alpha-value>)",
+        "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
       },
       backgroundImage: {
         "glass-gradient":

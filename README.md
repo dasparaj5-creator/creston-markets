@@ -194,4 +194,3 @@ middleware.ts           — route protection for /dashboard/* and /admin/*
   page body.
 - The floating debug panel (dev mode, Ctrl+Shift+D) shows the last 20 log
   entries in real time.
-# creston-markets

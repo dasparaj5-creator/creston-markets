@@ -24,12 +24,13 @@ export default async function ReconciliationPage() {
         <h1 className="text-2xl font-bold text-text-primary">Portfolio Reconciliation</h1>
       </div>
 
-      <div className="glass-card flex items-start gap-3 border-danger/30 bg-danger/5 p-5">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
+      <div className="glass-card flex items-start gap-3 border-gold/30 bg-gold/5 p-5">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
         <p className="text-sm text-text-primary/90">
-          <span className="font-semibold text-danger">INTERNAL RECONCILIATION</span> — This data is
-          for administrative record-keeping only. It will NOT be displayed to clients until the MT5
-          live feed is connected and verified.
+          <span className="font-semibold text-gold">CLIENT-VISIBLE</span> — Entries saved here are
+          shown directly to the client as their account statement. Double-check figures before
+          saving. This will be replaced by live MT5 data once connected, with no change to how it
+          looks on the client&apos;s side.
         </p>
       </div>
 

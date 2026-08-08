@@ -51,8 +51,9 @@ function consoleLog(entry: LogEntry) {
 }
 
 async function persist(entry: LogEntry) {
-  // Server-only persistence now lives in lib/logger-server.ts so this
-  // shared file never references next/headers, even indirectly.
+  // Server-only persistence lives in lib/logger-server.ts so this shared
+  // file never references next/headers, even indirectly — otherwise
+  // Next.js's bundler traces it into client code and fails the build.
   if (typeof window !== "undefined") return;
 }
 

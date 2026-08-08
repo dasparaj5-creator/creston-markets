@@ -1,9 +1,9 @@
-import { CreditCard } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDateTime } from "@/lib/utils";
 import RiskBanner from "@/components/shared/RiskBanner";
-import DepositInterestForm from "@/components/dashboard/DepositInterestForm";
+import CoinbaseCheckoutForm from "@/components/dashboard/CoinbaseCheckoutForm";
 
 export default async function DepositPage() {
   const profile = await requireUser();
@@ -18,28 +18,21 @@ export default async function DepositPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Deposit</h1>
-        <p className="mt-1 text-sm text-text-muted">Register your interest to fund your account.</p>
+        <p className="mt-1 text-sm text-text-muted">Fund your account via crypto (USDT / USDC).</p>
       </div>
 
       <RiskBanner variant="full" />
 
       <div className="glass-card flex items-start gap-3 border-gold/20 p-5">
-        <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
+        <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
         <p className="text-sm text-text-primary/90">
-          Deposit functionality will be enabled once our live trading infrastructure is confirmed.
-          Register your interest below and our team will follow up with next steps.
+          Deposits are processed via Coinbase Commerce. You&apos;ll be redirected to a secure
+          checkout page to complete payment in USDT or USDC — your account updates automatically
+          once payment is confirmed on-chain.
         </p>
       </div>
 
-      <DepositInterestForm plans={plans ?? []} userId={profile.id} />
-
-      {/* Payment shell placeholder */}
-      <div className="glass-card border-dashed border-white/20 p-6 text-center">
-        <p className="text-xs uppercase tracking-wide text-text-muted">Payment Gateway</p>
-        <p className="mt-2 text-sm text-text-muted">
-          This area will host the client&apos;s 3D-secure payment gateway once integrated in Phase 2.
-        </p>
-      </div>
+      <CoinbaseCheckoutForm plans={plans ?? []} />
 
       <div className="glass-card p-6">
         <h2 className="mb-4 text-sm font-semibold text-text-primary">Deposit History</h2>
@@ -56,7 +49,7 @@ export default async function DepositPage() {
               {deposits && deposits.length > 0 ? (
                 deposits.map((d) => (
                   <tr key={d.id} className="border-b border-white/5 last:border-0">
-                    <td className="py-3 text-text-primary/90">{formatDate(d.created_at)}</td>
+                    <td className="py-3 text-text-primary/90">{formatDateTime(d.created_at)}</td>
                     <td className="py-3 text-text-primary/90">{formatCurrency(d.amount)}</td>
                     <td className="py-3">
                       <span
@@ -72,7 +65,7 @@ export default async function DepositPage() {
               ) : (
                 <tr>
                   <td colSpan={3} className="py-8 text-center text-text-muted">
-                    No deposit interest registered yet.
+                    No deposits yet.
                   </td>
                 </tr>
               )}

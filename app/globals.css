@@ -2,15 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --navy: #0a0f1e;
-  --gold: #d4af37;
-  --electric: #00d4ff;
-  --slate-surface: #111827;
-  --text-primary: #f9fafb;
-  --text-muted: #6b7280;
-  --success: #10b981;
-  --danger: #ef4444;
+/* Colors as R G B channel triples (no commas) so Tailwind's
+   rgb(var(--x) / <alpha-value>) opacity modifiers work, e.g. bg-navy/80. */
+:root,
+.dark {
+  --color-navy: 10 15 30;              /* #0A0F1E */
+  --color-slate-surface: 17 24 39;     /* #111827 */
+  --color-text-primary: 249 250 251;   /* #F9FAFB */
+  --color-text-muted: 107 114 128;     /* #6B7280 */
+}
+
+.light {
+  --color-navy: 249 250 251;           /* #F9FAFB -- light background */
+  --color-slate-surface: 255 255 255;  /* #FFFFFF -- card surfaces */
+  --color-text-primary: 15 23 42;      /* #0F172A -- near-black text */
+  --color-text-muted: 71 85 105;       /* #475569 -- readable muted gray */
 }
 
 * {
@@ -18,22 +24,18 @@
 }
 
 body {
-  background-color: var(--navy);
-  color: var(--text-primary);
-}
-
-.light body {
-  background-color: #f9fafb;
-  color: #0a0f1e;
+  background-color: rgb(var(--color-navy));
+  color: rgb(var(--color-text-primary));
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 @layer components {
   .glass-card {
-    @apply relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-glass shadow-glass;
+    @apply relative rounded-2xl border border-black/10 bg-black/[0.02] backdrop-blur-glass shadow-glass dark:border-white/10 dark:bg-white/[0.04];
   }
 
   .glass-card-gold {
-    @apply relative rounded-2xl border border-gold/30 bg-white/[0.04] backdrop-blur-glass shadow-gold;
+    @apply relative rounded-2xl border border-gold/30 bg-black/[0.02] backdrop-blur-glass shadow-gold dark:bg-white/[0.04];
   }
 
   .btn-primary {
@@ -41,7 +43,7 @@ body {
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/5 px-6 py-3 font-semibold text-text-primary transition-all hover:bg-white/10 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-black/15 bg-black/[0.03] px-6 py-3 font-semibold text-text-primary transition-all hover:bg-black/[0.06] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none dark:border-white/20 dark:bg-white/5 dark:hover:bg-white/10;
   }
 
   .btn-danger {
@@ -49,7 +51,7 @@ body {
   }
 
   .input-field {
-    @apply w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-text-primary placeholder:text-text-muted outline-none transition-all focus:border-gold/50 focus:ring-1 focus:ring-gold/50;
+    @apply w-full rounded-lg border border-black/15 bg-black/[0.02] px-4 py-3 text-text-primary placeholder:text-text-muted outline-none transition-all focus:border-gold/50 focus:ring-1 focus:ring-gold/50 dark:border-white/10 dark:bg-white/[0.03];
   }
 
   .risk-banner {
