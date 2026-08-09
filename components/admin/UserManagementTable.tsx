@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import Link from "next/link";
+import { Search, Eye } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import KycActions from "@/components/admin/KycActions";
 import type { UserProfile } from "@/types";
@@ -82,7 +83,16 @@ export default function UserManagementTable({
                 </td>
                 <td className="py-3 text-text-primary/90">{formatDate(u.created_at)}</td>
                 <td className="py-3">
-                  <KycActions userId={u.id} currentStatus={u.kyc_status} adminId={adminId} />
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/admin/users/${u.id}`}
+                      className="btn-secondary !py-1 !px-2 text-xs"
+                      title="View full profile"
+                    >
+                      <Eye className="h-3.5 w-3.5" /> View
+                    </Link>
+                    <KycActions userId={u.id} currentStatus={u.kyc_status} adminId={adminId} />
+                  </div>
                 </td>
               </tr>
             ))}
