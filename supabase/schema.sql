@@ -716,22 +716,37 @@ create trigger trg_snapshot_profit_share after insert on portfolio_snapshots
 
 -- Auto-create a public.users profile row whenever a new auth.users row is
 -- created via ANY method -- email/password signup, Google OAuth, etc.
--- This is what makes Google sign-in work for brand-new users: without
--- this, a Google-authenticated user would have no row in public.users at
--- all, and every page that reads their profile would break.
 --
--- For email/password signups, the Register page's own insert into
--- public.users still runs immediately after this trigger fires (same
--- request), and simply updates the row this trigger already created with
--- the full_name/phone/country/referred_by/agreement data collected on the
--- form -- so no duplicate-row conflict, just an upsert-like flow.
+-- For email/password signups (via the Register page), full_name, phone,
+-- country, referred_by, and terms_accepted_at are all passed through as
+-- signUp() metadata and read here directly -- NOT written by a follow-up
+-- client-side call after signUp() resolves. This matters because
+-- Supabase's email-confirmation flow means there is no active session
+-- immediately after signUp() returns, so any follow-up write would be
+-- blocked by RLS until the user clicks the confirmation link. Populating
+-- the full row atomically here avoids that race condition entirely.
+--
+-- For Google OAuth sign-ups, none of this metadata exists, so the row is
+-- created with just email/full_name and terms_accepted_at stays null --
+-- middleware then routes them through /dashboard/complete-profile to
+-- collect the rest and record their acknowledgment explicitly.
 create or replace function handle_new_auth_user() returns trigger as $$
+declare
+  v_referred_by uuid;
+  v_terms_accepted_at text;
 begin
-  insert into public.users (id, email, full_name)
+  v_referred_by := nullif(new.raw_user_meta_data->>'referred_by', '')::uuid;
+  v_terms_accepted_at := new.raw_user_meta_data->>'terms_accepted_at';
+
+  insert into public.users (id, email, full_name, phone, country, referred_by, terms_accepted_at)
   values (
     new.id,
     new.email,
-    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name')
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
+    new.raw_user_meta_data->>'phone',
+    new.raw_user_meta_data->>'country',
+    v_referred_by,
+    case when v_terms_accepted_at is not null then v_terms_accepted_at::timestamptz else null end
   )
   on conflict (id) do nothing;
   return new;

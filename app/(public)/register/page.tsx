@@ -58,18 +58,12 @@ function RegisterForm() {
     try {
       const supabase = createClient();
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (authError || !authData.user) {
-        logger.error("Registration failed at auth step", { error: authError });
-        toast.error(authError?.message || "Registration failed.");
-        return;
-      }
-
-      // Resolve referrer id from the referral code, if provided.
+      // Resolve referrer id from the referral code BEFORE signUp, since
+      // RLS on the users table requires an authenticated session for
+      // reads/writes, and Supabase's email-confirmation flow means no
+      // session exists yet immediately after signUp() returns -- so this
+      // lookup must happen first, using only the public referral_code
+      // column via the pre-auth-safe select the RLS policy allows.
       let referredBy: string | null = null;
       if (values.referralCode) {
         const { data: referrer } = await supabase
@@ -83,24 +77,45 @@ function RegisterForm() {
         }
       }
 
-      const { error: profileError } = await supabase.from("users").upsert({
-        id: authData.user.id,
+      // Pass all profile data as auth metadata rather than writing to the
+      // users table directly afterward. This matters because Supabase's
+      // email-confirmation flow means there is NO active session
+      // immediately after signUp() resolves -- a follow-up write to the
+      // users table would be blocked by RLS until the user actually
+      // clicks the confirmation link. Passing it as metadata lets the
+      // handle_new_auth_user() database trigger create a fully-populated
+      // profile row atomically, with no race condition and no dependency
+      // on session timing.
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
-        full_name: values.fullName,
-        phone: values.phone,
-        country: values.country,
-        referred_by: referredBy,
-        role: "client",
-        terms_accepted_at: new Date().toISOString(),
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.fullName,
+            phone: values.phone,
+            country: values.country,
+            referred_by: referredBy,
+            terms_accepted_at: new Date().toISOString(),
+          },
+        },
       });
 
-      if (profileError) {
-        logger.error("Registration failed at profile step", { error: profileError });
-        toast.error("Account created but profile setup failed. Please contact support.");
+      if (authError || !authData.user) {
+        logger.error("Registration failed at auth step", { error: authError });
+        toast.error(authError?.message || "Registration failed.");
         return;
       }
 
       logger.info("New user registered", { email: values.email, referredBy });
+
+      if (!authData.session) {
+        // Email confirmation is required -- there's no active session yet,
+        // so we can't redirect to the dashboard. Tell the user clearly.
+        toast.success("Account created. Please check your email to confirm before logging in.");
+        router.push("/login");
+        return;
+      }
+
       toast.success("Account created. Welcome to Creston Markets.");
       router.push("/dashboard");
       router.refresh();

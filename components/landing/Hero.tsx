@@ -39,10 +39,6 @@ export default function Hero() {
         transition={{ duration: 0.7, ease: "easeOut" }}
         className="relative z-10 mx-auto max-w-4xl text-center"
       >
-        <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs font-medium text-gold">
-          Phase 1 · Demonstration & Onboarding Environment
-        </span>
-
         <h1 className="text-4xl font-bold tracking-tight text-text-primary sm:text-6xl">
           Algorithmic Trading,{" "}
           <span className="bg-gradient-to-r from-gold to-gold-light bg-clip-text text-transparent">
