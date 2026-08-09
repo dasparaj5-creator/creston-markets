@@ -5,6 +5,10 @@ import RiskBanner from "@/components/shared/RiskBanner";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Note: the terms_accepted_at gate (redirecting incomplete Google OAuth
+  // profiles to /dashboard/complete-profile) is enforced in middleware.ts,
+  // not here -- middleware has reliable access to the request path, while
+  // this Server Component layout does not without fragile header reads.
   const profile = await requireUser();
 
   return (

@@ -40,6 +40,7 @@ export interface UserProfile {
   plan_activated_at: string | null;
   account_active_since: string | null;
   is_active: boolean;
+  terms_accepted_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -83,7 +83,7 @@ function RegisterForm() {
         }
       }
 
-      const { error: profileError } = await supabase.from("users").insert({
+      const { error: profileError } = await supabase.from("users").upsert({
         id: authData.user.id,
         email: values.email,
         full_name: values.fullName,
@@ -91,6 +91,7 @@ function RegisterForm() {
         country: values.country,
         referred_by: referredBy,
         role: "client",
+        terms_accepted_at: new Date().toISOString(),
       });
 
       if (profileError) {
@@ -111,6 +112,25 @@ function RegisterForm() {
     }
   };
 
+  const handleGoogleSignup = async () => {
+    const supabase = createClient();
+    // Persist the referral code across the OAuth redirect round-trip via
+    // sessionStorage, since query params don't survive Google's redirect.
+    // The dashboard's first-load logic (or a dedicated callback route)
+    // reads this once and links referred_by if not already set.
+    if (refFromUrl) {
+      sessionStorage.setItem("cm_pending_referral_code", refFromUrl);
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (error) {
+      logger.error("Google sign-up failed", { error });
+      toast.error("Google sign-up failed. Please try again.");
+    }
+  };
+
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center bg-hero-mesh px-4 py-12">
       <div className="w-full max-w-lg">
@@ -120,6 +140,20 @@ function RegisterForm() {
           <p className="mt-2 text-sm text-text-muted">
             Register to start onboarding with Creston Markets.
           </p>
+        </div>
+
+        <div className="glass-card mb-4 space-y-4 p-8">
+          <button type="button" onClick={handleGoogleSignup} className="btn-secondary w-full">
+            Sign up with Google
+          </button>
+          <p className="text-center text-[11px] text-text-muted">
+            You&apos;ll be asked to complete your profile (phone, country, and required
+            acknowledgments) after signing up with Google.
+          </p>
+          <div className="relative py-1 text-center text-xs text-text-muted">
+            <span className="relative bg-slate-surface px-2">or register with email</span>
+            <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-white/10" />
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="glass-card space-y-4 p-8">

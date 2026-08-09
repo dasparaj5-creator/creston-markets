@@ -58,6 +58,23 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Google OAuth sign-ups never see the mandatory risk/terms checkboxes
+  // shown on the email registration form. Gate the rest of the dashboard
+  // until they've completed /dashboard/complete-profile, which collects
+  // phone/country and the same acknowledgments.
+  const isCompleteProfilePath = path === "/dashboard/complete-profile";
+  if (isDashboardPath && user && !isCompleteProfilePath) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("terms_accepted_at")
+      .eq("id", user.id)
+      .single();
+
+    if (profile && !profile.terms_accepted_at) {
+      return NextResponse.redirect(new URL("/dashboard/complete-profile", request.url));
+    }
+  }
+
   return response;
 }
 

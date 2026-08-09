@@ -83,6 +83,10 @@ create table if not exists users (
   plan_activated_at timestamptz,
   account_active_since timestamptz,         -- set when first deposit approved
   is_active boolean default true,
+  terms_accepted_at timestamptz,            -- required acknowledgment; null means the
+                                             -- mandatory risk/terms step hasn't been completed
+                                             -- yet (relevant for Google OAuth sign-ups, who
+                                             -- never see the checkboxes shown on email signup)
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -709,6 +713,34 @@ $$ language plpgsql security definer;
 drop trigger if exists trg_snapshot_profit_share on portfolio_snapshots;
 create trigger trg_snapshot_profit_share after insert on portfolio_snapshots
   for each row execute function handle_snapshot_profit_share();
+
+-- Auto-create a public.users profile row whenever a new auth.users row is
+-- created via ANY method -- email/password signup, Google OAuth, etc.
+-- This is what makes Google sign-in work for brand-new users: without
+-- this, a Google-authenticated user would have no row in public.users at
+-- all, and every page that reads their profile would break.
+--
+-- For email/password signups, the Register page's own insert into
+-- public.users still runs immediately after this trigger fires (same
+-- request), and simply updates the row this trigger already created with
+-- the full_name/phone/country/referred_by/agreement data collected on the
+-- form -- so no duplicate-row conflict, just an upsert-like flow.
+create or replace function handle_new_auth_user() returns trigger as $$
+begin
+  insert into public.users (id, email, full_name)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name')
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists trg_new_auth_user on auth.users;
+create trigger trg_new_auth_user after insert on auth.users
+  for each row execute function handle_new_auth_user();
 
 -- ============================================================================
 -- Default commission_config seed -- L1-L5 defaults per spec. Admin can
