@@ -61,14 +61,22 @@ export async function middleware(request: NextRequest) {
   // Google OAuth sign-ups never see the mandatory risk/terms checkboxes
   // shown on the email registration form. Gate the rest of the dashboard
   // until they've completed /dashboard/complete-profile, which collects
-  // phone/country and the same acknowledgments.
+  // phone/country and the same acknowledgments. Also enforce is_active
+  // here: a deactivated ("on hold") account should be signed-out of the
+  // dashboard immediately, not just hidden from admin's own view.
   const isCompleteProfilePath = path === "/dashboard/complete-profile";
+  const isAccountHoldPath = path === "/account-on-hold";
   if (isDashboardPath && user && !isCompleteProfilePath) {
     const { data: profile } = await supabase
       .from("users")
-      .select("terms_accepted_at")
+      .select("terms_accepted_at, is_active")
       .eq("id", user.id)
       .single();
+
+    if (profile && profile.is_active === false && !isAccountHoldPath) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/account-on-hold", request.url));
+    }
 
     if (profile && !profile.terms_accepted_at) {
       return NextResponse.redirect(new URL("/dashboard/complete-profile", request.url));

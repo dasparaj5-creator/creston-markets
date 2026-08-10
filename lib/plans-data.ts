@@ -16,6 +16,7 @@ export const PLANS_DISPLAY: PlanDisplay[] = [
     withdrawal: "Monthly",
     support: "Email",
     reporting: "Monthly Statement",
+    popular: true,
   },
   {
     name: "Silver",
@@ -24,7 +25,6 @@ export const PLANS_DISPLAY: PlanDisplay[] = [
     withdrawal: "Bi-weekly",
     support: "Priority Email",
     reporting: "Weekly Statement",
-    popular: true,
   },
   {
     name: "Gold",

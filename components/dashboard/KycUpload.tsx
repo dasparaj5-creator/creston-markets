@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Upload, FileCheck, Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -35,16 +36,21 @@ export default function KycUpload({
   currentStatus: KycStatus;
   existingDocuments: KycDocument[];
 }) {
-  // Derive which document types already have at least one uploaded side,
-  // to pre-populate the two "slots" the client is choosing between.
-  const existingTypes = Array.from(new Set(existingDocuments.map((d) => d.document_type)));
+  const router = useRouter();
+
+  // Local, optimistically-updated copy so removing a document reflects
+  // immediately without waiting on a full server round-trip.
+  const [documents, setDocuments] = useState<KycDocument[]>(existingDocuments);
+
+  const existingTypes = Array.from(new Set(documents.map((d) => d.document_type)));
   const [slotTypes, setSlotTypes] = useState<(KycDocumentType | "")[]>([
     existingTypes[0] ?? "",
     existingTypes[1] ?? "",
   ]);
   const [uploading, setUploading] = useState<string | null>(null); // key: `${slotIndex}-${side}`
+  const [removing, setRemoving] = useState<string | null>(null); // document id
 
-  const docsByType = (type: KycDocumentType) => existingDocuments.filter((d) => d.document_type === type);
+  const docsByType = (type: KycDocumentType) => documents.filter((d) => d.document_type === type);
 
   const handleFile = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -68,23 +74,22 @@ export default function KycUpload({
 
       // Remove any prior upload for this exact (type, side) slot first, since
       // the unique index only allows one row per (user, type, side).
-      await supabase
-        .from("kyc_documents")
-        .delete()
-        .eq("user_id", userId)
-        .eq("document_type", docType)
-        .eq("side", side);
+      const priorDoc = documents.find((d) => d.document_type === docType && d.side === side);
+      if (priorDoc) {
+        await supabase.storage.from("kyc-documents").remove([priorDoc.file_path]);
+        await supabase.from("kyc_documents").delete().eq("id", priorDoc.id);
+      }
 
-      const { error: insertError } = await supabase.from("kyc_documents").insert({
-        user_id: userId,
-        document_type: docType,
-        side,
-        file_path: path,
-      });
+      const { data: inserted, error: insertError } = await supabase
+        .from("kyc_documents")
+        .insert({ user_id: userId, document_type: docType, side, file_path: path })
+        .select()
+        .single();
       if (insertError) throw insertError;
 
       await supabase.from("users").update({ kyc_status: "pending" }).eq("id", userId);
 
+      setDocuments((prev) => [...prev.filter((d) => d.id !== priorDoc?.id), inserted]);
       logger.info("KYC document uploaded", { userId, docType, side });
       toast.success(`${DOCUMENT_TYPE_LABELS[docType]} (${side}) uploaded.`);
     } catch (err) {
@@ -93,6 +98,28 @@ export default function KycUpload({
     } finally {
       setUploading(null);
       e.target.value = "";
+    }
+  };
+
+  const handleRemove = async (doc: KycDocument) => {
+    setRemoving(doc.id);
+    try {
+      const supabase = createClient();
+      const { error: storageError } = await supabase.storage.from("kyc-documents").remove([doc.file_path]);
+      if (storageError) throw storageError;
+
+      const { error: dbError } = await supabase.from("kyc_documents").delete().eq("id", doc.id);
+      if (dbError) throw dbError;
+
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+      logger.info("KYC document removed", { userId, documentId: doc.id });
+      toast.success("Document removed. You can upload a replacement.");
+      router.refresh();
+    } catch (err) {
+      logger.error("KYC document removal failed", { err });
+      toast.error("Could not remove document. Please try again.");
+    } finally {
+      setRemoving(null);
     }
   };
 
@@ -140,33 +167,43 @@ export default function KycUpload({
                   const doc = side === "front" ? frontDoc : backDoc;
                   const key = `${slotIndex}-${side}`;
                   return (
-                    <label
-                      key={side}
-                      className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/20 px-3 py-6 text-center hover:border-gold/40"
-                    >
-                      {doc ? (
-                        <>
-                          <FileCheck className="h-5 w-5 text-success" />
-                          <span className="text-xs text-text-primary">
-                            {side === "front" ? "Front" : "Back"} uploaded
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-5 w-5 text-text-muted" />
-                          <span className="text-xs text-text-muted">
-                            {uploading === key ? "Uploading..." : `Upload ${side}`}
-                          </span>
-                        </>
+                    <div key={side} className="relative">
+                      <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/20 px-3 py-6 text-center hover:border-gold/40">
+                        {doc ? (
+                          <>
+                            <FileCheck className="h-5 w-5 text-success" />
+                            <span className="text-xs text-text-primary">
+                              {side === "front" ? "Front" : "Back"} uploaded
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-5 w-5 text-text-muted" />
+                            <span className="text-xs text-text-muted">
+                              {uploading === key ? "Uploading..." : `Upload ${side}`}
+                            </span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => handleFile(e, slotIndex, side)}
+                          disabled={uploading === key || !!doc}
+                        />
+                      </label>
+                      {doc && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(doc)}
+                          disabled={removing === doc.id}
+                          title="Remove and re-upload"
+                          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border border-white/10 bg-slate-surface text-text-muted hover:border-danger/40 hover:text-danger"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
                       )}
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        onChange={(e) => handleFile(e, slotIndex, side)}
-                        disabled={uploading === key}
-                      />
-                    </label>
+                    </div>
                   );
                 })}
               </div>

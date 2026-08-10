@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Mail, Phone, Globe, Calendar, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Globe, Calendar, ShieldCheck, Database } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
 import KycActions from "@/components/admin/KycActions";
 import KycDocumentViewer from "@/components/admin/KycDocumentViewer";
 import UserReferralTree from "@/components/admin/UserReferralTree";
+import AccountStatusActions from "@/components/admin/AccountStatusActions";
+import UserReconciliationForm from "@/components/admin/UserReconciliationForm";
 
 const kycBadge: Record<string, string> = {
   approved: "badge-success",
@@ -83,6 +85,9 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
               {user.is_active ? "Active" : "Inactive"}
             </span>
             {user.role === "admin" && <span className="badge-warning">Admin</span>}
+            {user.role !== "admin" && (
+              <AccountStatusActions userId={user.id} isActive={user.is_active} adminId={admin.id} />
+            )}
           </div>
         </div>
 
@@ -121,6 +126,14 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
       <div className="glass-card p-6">
         <h2 className="mb-4 text-sm font-semibold text-text-primary">Referral Network</h2>
         <UserReferralTree referredBy={referredBy} referredUsers={referredUsers ?? []} />
+      </div>
+
+      {/* Reconciliation for this user */}
+      <div className="glass-card p-6">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-text-primary">
+          <Database className="h-4 w-4 text-gold" /> Reconciliation
+        </h2>
+        <UserReconciliationForm userId={user.id} adminId={admin.id} />
       </div>
 
       {/* Earnings summary */}

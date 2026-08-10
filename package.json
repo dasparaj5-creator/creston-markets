@@ -31,7 +31,10 @@
     "server-only": "^0.0.1",
     "xlsx": "^0.18.5",
     "jspdf": "^2.5.2",
-    "jspdf-autotable": "^3.8.2"
+    "jspdf-autotable": "^3.8.2",
+    "libphonenumber-js": "^1.11.9",
+    "react-select": "^5.8.1",
+    "world-countries": "^5.0.0"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",

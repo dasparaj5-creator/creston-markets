@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
@@ -10,11 +10,15 @@ import { UserCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import RiskBanner from "@/components/shared/RiskBanner";
+import CountrySelect from "@/components/shared/CountrySelect";
+import PhoneInput from "@/components/shared/PhoneInput";
+import { findCountryByCode } from "@/lib/countries";
 import Link from "next/link";
 
 const schema = z.object({
-  phone: z.string().min(6, "Phone number is required"),
-  country: z.string().min(2, "Country is required"),
+  countryCode: z.string().min(2, "Country is required"),
+  phoneNational: z.string().min(1, "Phone number is required"),
+  phoneValid: z.boolean().refine((v) => v === true, { message: "Enter a valid phone number" }),
   agreeTerms: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the Terms of Service and Privacy Policy" }),
   }),
@@ -30,8 +34,13 @@ function CompleteProfileForm() {
   const {
     register,
     handleSubmit,
+    control,
+    setValue,
+    watch,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { phoneValid: false } });
+
+  const countryCode = watch("countryCode");
 
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
@@ -46,6 +55,9 @@ function CompleteProfileForm() {
         router.push("/login");
         return;
       }
+
+      const country = findCountryByCode(values.countryCode);
+      const fullPhoneNumber = `${country?.dialCode ?? ""}${values.phoneNational}`;
 
       // Pick up a referral code stashed before the Google redirect, if any.
       let referredBy: string | null = null;
@@ -64,8 +76,8 @@ function CompleteProfileForm() {
       const { error } = await supabase
         .from("users")
         .update({
-          phone: values.phone,
-          country: values.country,
+          phone: fullPhoneNumber,
+          country: country?.name ?? values.countryCode,
           terms_accepted_at: new Date().toISOString(),
           ...(referredBy ? { referred_by: referredBy } : {}),
         })
@@ -96,15 +108,30 @@ function CompleteProfileForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="glass-card space-y-4 p-8">
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-text-muted">Phone</label>
-          <input {...register("phone")} placeholder="+1 555 000 0000" className="input-field" />
-          {errors.phone && <p className="mt-1 text-xs text-danger">{errors.phone.message}</p>}
+          <label className="mb-1.5 block text-xs font-medium text-text-muted">Country</label>
+          <Controller
+            name="countryCode"
+            control={control}
+            render={({ field }) => <CountrySelect value={field.value ?? ""} onChange={field.onChange} />}
+          />
+          {errors.countryCode && <p className="mt-1 text-xs text-danger">{errors.countryCode.message}</p>}
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-medium text-text-muted">Country</label>
-          <input {...register("country")} placeholder="United States" className="input-field" />
-          {errors.country && <p className="mt-1 text-xs text-danger">{errors.country.message}</p>}
+          <label className="mb-1.5 block text-xs font-medium text-text-muted">Phone</label>
+          <Controller
+            name="phoneNational"
+            control={control}
+            render={({ field }) => (
+              <PhoneInput
+                countryCode={countryCode}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onValidityChange={(valid) => setValue("phoneValid", valid, { shouldValidate: true })}
+              />
+            )}
+          />
+          {errors.phoneNational && <p className="mt-1 text-xs text-danger">{errors.phoneNational.message}</p>}
         </div>
 
         <RiskBanner variant="compact" />

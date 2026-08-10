@@ -12,6 +12,7 @@ import {
   Megaphone,
   BarChart3,
   Settings,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/shared/Logo";
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/earnings", label: "Referral & Earnings", icon: Gift },
   { href: "/admin/plans", label: "Plans", icon: Layers },
   { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
+  { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

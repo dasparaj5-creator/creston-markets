@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import Logo from "@/components/shared/Logo";
@@ -17,9 +17,21 @@ const links = [
 
 export default function PublicNavbar() {
   const [open, setOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-navy/80 backdrop-blur-glass">
+    <header ref={navRef as any} className="sticky top-0 z-50 border-b border-white/5 bg-navy/80 backdrop-blur-glass">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Logo />
 
@@ -45,13 +57,16 @@ export default function PublicNavbar() {
           </Link>
         </div>
 
-        <button
-          className="flex h-9 w-9 items-center justify-center text-text-primary md:hidden"
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            className="flex h-9 w-9 items-center justify-center text-text-primary"
+            onClick={() => setOpen((o) => !o)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </nav>
 
       {open && (
@@ -68,10 +83,10 @@ export default function PublicNavbar() {
               </Link>
             ))}
             <div className="flex items-center gap-3 pt-2">
-              <Link href="/login" className="btn-secondary flex-1 !py-2 text-sm">
+              <Link href="/login" onClick={() => setOpen(false)} className="btn-secondary flex-1 !py-2 text-sm">
                 Log In
               </Link>
-              <Link href="/register" className="btn-primary flex-1 !py-2 text-sm">
+              <Link href="/register" onClick={() => setOpen(false)} className="btn-primary flex-1 !py-2 text-sm">
                 Open Account
               </Link>
             </div>
