@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { findCountryByCode } from "@/lib/countries";
 
@@ -18,22 +18,36 @@ interface PhoneInputProps {
  * requires exactly 10 digits after +91; other countries have different
  * valid lengths, which this library already knows correctly rather than
  * us hand-rolling a wrong universal "must be N digits" rule.
+ *
+ * IMPORTANT: validity is computed and reported via useEffect, not during
+ * render (e.g. inside useMemo). Calling a parent state setter during
+ * render is a React anti-pattern that can cause an infinite render loop
+ * if the parent's callback prop isn't referentially stable across
+ * renders -- which is exactly what caused the page-freeze bug here
+ * originally. useEffect runs strictly after render/commit, breaking that
+ * cycle even if the parent passes a fresh inline function every time.
  */
 export default function PhoneInput({ countryCode, value, onChange, onValidityChange }: PhoneInputProps) {
   const country = findCountryByCode(countryCode);
   const dialCode = country?.dialCode ?? "";
+  const [isValid, setIsValid] = useState<boolean | null>(null);
 
-  const isValid = useMemo(() => {
-    if (!countryCode || !value) return null;
-    try {
-      const valid = isValidPhoneNumber(value, countryCode as any);
-      onValidityChange?.(valid);
-      return valid;
-    } catch {
+  useEffect(() => {
+    if (!countryCode || !value) {
+      setIsValid(null);
       onValidityChange?.(false);
-      return false;
+      return;
     }
-  }, [countryCode, value, onValidityChange]);
+    let valid = false;
+    try {
+      valid = isValidPhoneNumber(value, countryCode as any);
+    } catch {
+      valid = false;
+    }
+    setIsValid(valid);
+    onValidityChange?.(valid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countryCode, value]);
 
   return (
     <div>
