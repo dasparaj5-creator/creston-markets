@@ -14,17 +14,19 @@ export default async function WithdrawPage() {
     supabase.from("withdrawals").select("*").eq("user_id", profile.id).order("created_at", { ascending: false }),
   ]);
 
-  const liveSnapshot = (snapshots ?? []).find((s) => s.source === "mt5_api");
-  const availableBalance = liveSnapshot?.balance ?? 0;
+  const sortedSnapshots = (snapshots ?? [])
+    .slice()
+    .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
+  const availableBalance = sortedSnapshots[0]?.balance ?? 0;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Withdraw</h1>
-        <p className="mt-1 text-sm text-text-muted">Submit a withdrawal request.</p>
+        <p className="mt-1 text-sm text-text-muted">Submit a withdrawal request via USDT.</p>
       </div>
 
-      <RiskBanner variant="full" />
+      <RiskBanner variant="compact" />
 
       <div className="glass-card flex items-center gap-4 p-6">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-gold/10 text-gold">
@@ -38,7 +40,7 @@ export default async function WithdrawPage() {
 
       <div className="glass-card border-gold/20 p-5">
         <p className="text-sm text-text-primary/90">
-          Withdrawal requests will be processed once live trading operations commence.
+          Withdrawals are processed manually by our team, typically within 6–8 hours.
         </p>
       </div>
 

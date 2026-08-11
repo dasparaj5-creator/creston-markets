@@ -134,7 +134,7 @@ function CompleteProfileForm() {
           {errors.phoneNational && <p className="mt-1 text-xs text-danger">{errors.phoneNational.message}</p>}
         </div>
 
-        <RiskBanner variant="compact" />
+        <RiskBanner variant="line" />
 
         <div className="space-y-3 pt-1">
           <label className="flex items-start gap-2 text-xs text-text-muted">

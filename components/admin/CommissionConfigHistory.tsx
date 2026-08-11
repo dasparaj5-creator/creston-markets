@@ -17,7 +17,8 @@ export default function CommissionConfigHistory({
             <tr className="border-b border-white/10 text-xs uppercase text-text-muted">
               <th className="pb-2 font-medium">When</th>
               <th className="pb-2 font-medium">Who</th>
-              <th className="pb-2 font-medium">Level</th>
+              <th className="pb-2 font-medium">Table</th>
+              <th className="pb-2 font-medium">Position</th>
               <th className="pb-2 font-medium">Field</th>
               <th className="pb-2 font-medium">Change</th>
             </tr>
@@ -29,7 +30,8 @@ export default function CommissionConfigHistory({
                 <td className="py-2.5 text-text-primary/90">
                   {e.changed_by ? adminNames[e.changed_by] ?? "Unknown admin" : "—"}
                 </td>
-                <td className="py-2.5 text-text-primary/90">L{e.level}</td>
+                <td className="py-2.5 text-text-primary/90">{e.chain_depth}-layer</td>
+                <td className="py-2.5 text-text-primary/90">Position {e.position}</td>
                 <td className="py-2.5 text-text-primary/90">{e.field_changed}</td>
                 <td className="py-2.5">
                   <span className="text-text-muted">{e.old_value}</span>
@@ -40,7 +42,7 @@ export default function CommissionConfigHistory({
             ))}
             {entries.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-text-muted">
+                <td colSpan={6} className="py-8 text-center text-text-muted">
                   No config changes recorded yet.
                 </td>
               </tr>

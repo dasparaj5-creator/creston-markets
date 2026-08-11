@@ -14,6 +14,7 @@ import Logo from "@/components/shared/Logo";
 import RiskBanner from "@/components/shared/RiskBanner";
 import CountrySelect from "@/components/shared/CountrySelect";
 import PhoneInput from "@/components/shared/PhoneInput";
+import PasswordInput from "@/components/shared/PasswordInput";
 import { findCountryByCode } from "@/lib/countries";
 
 const schema = z
@@ -226,12 +227,12 @@ function RegisterForm() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-text-muted">Password</label>
-              <input {...register("password")} type="password" placeholder="••••••••" className="input-field" />
+              <PasswordInput {...register("password")} placeholder="••••••••" />
               {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-text-muted">Confirm Password</label>
-              <input {...register("confirmPassword")} type="password" placeholder="••••••••" className="input-field" />
+              <PasswordInput {...register("confirmPassword")} placeholder="••••••••" />
               {errors.confirmPassword && (
                 <p className="mt-1 text-xs text-danger">{errors.confirmPassword.message}</p>
               )}
@@ -248,7 +249,7 @@ function RegisterForm() {
             />
           </div>
 
-          <RiskBanner variant="compact" />
+          <RiskBanner variant="line" />
 
           <div className="space-y-3 pt-1">
             <label className="flex items-start gap-2 text-xs text-text-muted">

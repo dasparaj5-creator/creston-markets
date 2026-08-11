@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import NextTopLoader from "nextjs-toploader";
 import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import DebugPanel from "@/components/shared/DebugPanel";
 
@@ -22,6 +23,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans antialiased`}>
+        {/* Thin gold progress line at the very top of the viewport, no
+            percentage text -- shown during route transitions and any
+            navigation, matching the "premium site" loading feel. */}
+        <NextTopLoader
+          color="#D4AF37"
+          height={2}
+          showSpinner={false}
+          shadow="0 0 10px #D4AF37,0 0 5px #D4AF37"
+        />
         <ErrorBoundary>
           {children}
           <DebugPanel />

@@ -29,8 +29,8 @@ export default async function ReconciliationPage() {
         <p className="text-sm text-text-primary/90">
           <span className="font-semibold text-gold">CLIENT-VISIBLE</span> — Entries saved here are
           shown directly to the client as their account statement. Double-check figures before
-          saving. This will be replaced by live MT5 data once connected, with no change to how it
-          looks on the client&apos;s side.
+          saving. This will be replaced by live automated data once connected, with no change to
+          how it looks on the client&apos;s side.
         </p>
       </div>
 
@@ -42,13 +42,13 @@ export default async function ReconciliationPage() {
         <p className="mt-2 text-sm text-text-muted">Bulk reconciliation upload — coming soon.</p>
       </div>
 
-      {/* MT5 integration placeholder */}
+      {/* Automated live sync placeholder */}
       <div className="glass-card flex items-center gap-4 border-electric/20 p-6">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-electric/10 text-electric">
           <Cpu className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-sm font-semibold text-text-primary">MT5 Integration</p>
+          <p className="text-sm font-semibold text-text-primary">Live Sync Integration</p>
           <p className="mt-0.5 text-xs text-text-muted">UI only, non-functional — Phase 2.</p>
         </div>
       </div>

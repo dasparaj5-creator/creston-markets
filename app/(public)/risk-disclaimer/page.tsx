@@ -6,11 +6,6 @@ export default function RiskDisclaimerPage() {
     <LegalPage title="Risk Disclaimer" updated="August 2026">
       <RiskBanner variant="full" />
       <p>
-        Creston Markets operates a Phase 1 demonstration and onboarding environment. In this
-        phase, deposit and withdrawal flows are interest-registration only — no real funds are
-        transferred, and no live PAMM or MT5 trading connection is active.
-      </p>
-      <p>
         Trading in financial instruments, including through a PAMM (Percentage Allocation
         Management Module) structure, involves significant risk of loss. Past performance,
         including any illustrative figures shown on this platform, is not indicative of future
@@ -24,10 +19,15 @@ export default function RiskDisclaimerPage() {
         advisor before making any investment decision.
       </p>
       <p>
-        Any real-money deposit or withdrawal functionality, and any live performance data, will
-        only be enabled once the underlying PAMM/MT5 connection has been established and
-        confirmed, and once any required regulatory licensing for accepting client funds has been
-        obtained.
+        Deposits are made via cryptocurrency (USDT) and are manually verified by our team before
+        being credited to an account. Withdrawals are processed via cryptocurrency to a wallet
+        address you provide. It is your responsibility to ensure all wallet and network details
+        you submit are accurate — Creston Markets is not responsible for funds lost due to
+        incorrect account or wallet information supplied by the client.
+      </p>
+      <p>
+        Account balances and performance figures are currently reviewed and recorded manually by
+        our team, with automated live syncing planned for the future.
       </p>
     </LegalPage>
   );

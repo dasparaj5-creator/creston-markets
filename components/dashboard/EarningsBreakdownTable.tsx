@@ -5,7 +5,8 @@ import { maskName } from "@/lib/utils";
 
 interface EarningRow {
   id: string;
-  level: number;
+  chain_depth: number;
+  position: number;
   commission_type: "joining_bonus" | "profit_share";
   rate_at_time: number | null;
   bonus_amount_at_time: number | null;
@@ -25,7 +26,7 @@ export default function EarningsBreakdownTable({ records }: { records: EarningRo
           <thead>
             <tr className="border-b border-white/10 text-xs uppercase text-text-muted">
               <th className="pb-3 font-medium">From</th>
-              <th className="pb-3 font-medium">Level</th>
+              <th className="pb-3 font-medium">Position</th>
               <th className="pb-3 font-medium">Type</th>
               <th className="pb-3 font-medium">Rate</th>
               <th className="pb-3 font-medium">Amount</th>
@@ -40,7 +41,9 @@ export default function EarningsBreakdownTable({ records }: { records: EarningRo
                 <td className="py-3 text-text-primary/90">
                   {r.source_user?.full_name ? maskName(r.source_user.full_name) : "—"}
                 </td>
-                <td className="py-3 text-text-primary/90">L{r.level}</td>
+                <td className="py-3 text-text-primary/90">
+                  Position {r.position} <span className="text-text-muted">({r.chain_depth}-layer chain)</span>
+                </td>
                 <td className="py-3">
                   <span className="badge-neutral">
                     {r.commission_type === "joining_bonus" ? "Joining Bonus" : "Profit Share"}

@@ -71,7 +71,7 @@ export default function PlansSection() {
           ))}
         </div>
 
-        <RiskBanner variant="compact" className="mx-auto mt-10 max-w-3xl" />
+        <RiskBanner variant="line" className="mx-auto mt-10 max-w-3xl" />
       </div>
     </section>
   );

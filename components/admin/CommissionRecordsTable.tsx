@@ -129,7 +129,7 @@ export default function CommissionRecordsTable({
               </th>
               <th className="pb-2 font-medium">Beneficiary</th>
               <th className="pb-2 font-medium">Source User</th>
-              <th className="pb-2 font-medium">Level</th>
+              <th className="pb-2 font-medium">Position</th>
               <th className="pb-2 font-medium">Type</th>
               <th className="pb-2 font-medium">Rate</th>
               <th className="pb-2 font-medium">Amount</th>
@@ -150,7 +150,10 @@ export default function CommissionRecordsTable({
                 </td>
                 <td className="py-2.5 text-text-primary/90">{r.beneficiary?.full_name || r.beneficiary?.email}</td>
                 <td className="py-2.5 text-text-primary/90">{r.source_user?.full_name || r.source_user?.email}</td>
-                <td className="py-2.5 text-text-primary/90">L{r.level}</td>
+                <td className="py-2.5 text-text-primary/90">
+                  {r.position === 1 ? "Nearest" : `${r.position}${["", "st", "nd", "rd"][r.position] ?? "th"}`}
+                  <span className="ml-1 text-text-muted">({r.chain_depth}-layer)</span>
+                </td>
                 <td className="py-2.5">
                   <span className="badge-neutral">{r.commission_type === "joining_bonus" ? "Joining Bonus" : "Profit Share"}</span>
                 </td>

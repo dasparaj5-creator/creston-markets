@@ -21,11 +21,6 @@ export default async function AdminEarningsPage() {
     supabase.from("users").select("id, full_name, email").eq("role", "admin"),
   ]);
 
-  // Latest active config per level (highest effective_from per level).
-  const currentConfig = [1, 2, 3, 4, 5]
-    .map((level) => (allConfig ?? []).find((c) => c.level === level))
-    .filter((c): c is NonNullable<typeof c> => !!c);
-
   const adminNames: Record<string, string> = {};
   (admins ?? []).forEach((a) => (adminNames[a.id] = a.full_name || a.email));
 
@@ -34,13 +29,13 @@ export default async function AdminEarningsPage() {
       <div>
         <h1 className="text-2xl font-bold text-text-primary">Referral & Earnings Management</h1>
         <p className="mt-1 text-sm text-text-muted">
-          5-level joining bonus and profit share configuration. Changes only affect future
-          earnings — all past commission records remain frozen at the rate active when they were
-          calculated.
+          5-table (1 through 5 layers) joining bonus and profit share configuration. Changes only
+          affect future earnings — all past commission records remain frozen at the rate active
+          when they were calculated.
         </p>
       </div>
 
-      <CommissionConfigEditor currentConfig={currentConfig} adminId={admin.id} />
+      <CommissionConfigEditor currentConfig={allConfig ?? []} adminId={admin.id} />
       <CommissionRecordsTable records={(records as any) ?? []} adminId={admin.id} />
       <CommissionConfigHistory entries={auditEntries ?? []} adminNames={adminNames} />
     </div>

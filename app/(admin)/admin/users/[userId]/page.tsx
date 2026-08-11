@@ -9,6 +9,7 @@ import KycDocumentViewer from "@/components/admin/KycDocumentViewer";
 import UserReferralTree from "@/components/admin/UserReferralTree";
 import AccountStatusActions from "@/components/admin/AccountStatusActions";
 import UserReconciliationForm from "@/components/admin/UserReconciliationForm";
+import PlanAllocationForm from "@/components/admin/PlanAllocationForm";
 
 const kycBadge: Record<string, string> = {
   approved: "badge-success",
@@ -25,6 +26,7 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
 
   const [
     { data: plan },
+    { data: allPlans },
     { data: referredBy },
     { data: referredUsers },
     { data: deposits },
@@ -36,6 +38,7 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
     { data: tickets },
   ] = await Promise.all([
     user.plan_id ? supabase.from("plans").select("name").eq("id", user.plan_id).single() : Promise.resolve({ data: null }),
+    supabase.from("plans").select("*").eq("is_active", true).order("min_deposit"),
     user.referred_by
       ? supabase.from("users").select("id, full_name, email, kyc_status, created_at").eq("id", user.referred_by).single()
       : Promise.resolve({ data: null }),
@@ -122,6 +125,9 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
         <KycDocumentViewer documents={kycDocuments ?? []} />
       </div>
 
+      {/* Plan allocation */}
+      <PlanAllocationForm userId={user.id} currentPlanId={user.plan_id} plans={allPlans ?? []} adminId={admin.id} />
+
       {/* Referral relationships */}
       <div className="glass-card p-6">
         <h2 className="mb-4 text-sm font-semibold text-text-primary">Referral Network</h2>
@@ -159,7 +165,7 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
               <thead>
                 <tr className="border-b border-white/10 text-xs uppercase text-text-muted">
                   <th className="pb-2 font-medium">From</th>
-                  <th className="pb-2 font-medium">Level</th>
+                  <th className="pb-2 font-medium">Position</th>
                   <th className="pb-2 font-medium">Type</th>
                   <th className="pb-2 font-medium">Amount</th>
                   <th className="pb-2 font-medium">Status</th>
@@ -169,7 +175,10 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
                 {(earningsAsBeneficiary ?? []).slice(0, 10).map((r: any) => (
                   <tr key={r.id} className="border-b border-white/5 last:border-0">
                     <td className="py-2 text-text-primary/90">{r.source_user?.full_name || r.source_user?.email}</td>
-                    <td className="py-2 text-text-primary/90">L{r.level}</td>
+                    <td className="py-2 text-text-primary/90">
+                      {r.position === 1 ? "Nearest" : `${r.position}${["", "st", "nd", "rd"][r.position] ?? "th"}`}
+                      <span className="text-text-muted"> ({r.chain_depth}-layer)</span>
+                    </td>
                     <td className="py-2 text-text-primary/90">{r.commission_type === "joining_bonus" ? "Joining Bonus" : "Profit Share"}</td>
                     <td className="py-2 text-text-primary/90">{formatCurrency(r.commission_earned)}</td>
                     <td className="py-2"><span className={r.status === "paid" ? "badge-success" : "badge-warning"}>{r.status}</span></td>

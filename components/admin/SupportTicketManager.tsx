@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import { formatDateTime } from "@/lib/utils";
@@ -99,37 +99,53 @@ export default function SupportTicketManager({ tickets, adminId }: { tickets: En
       </div>
 
       <div className="space-y-3">
-        {filtered.map((t) => (
-          <div key={t.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-            <button
-              onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
-              className="flex w-full items-start justify-between gap-3 text-left"
-            >
-              <div className="flex items-start gap-3">
-                <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
-                <div>
-                  <p className="text-sm font-medium text-text-primary">{t.subject}</p>
-                  <Link
-                    href={`/admin/users/${t.user_id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs text-text-muted hover:text-gold hover:underline"
-                  >
-                    {t.user?.full_name || t.user?.email}
-                  </Link>
-                  <p className="mt-1 text-xs text-text-muted/70">{formatDateTime(t.created_at)}</p>
+        {filtered.map((t) => {
+          const isExpanded = expandedId === t.id;
+          return (
+            <div key={t.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => setExpandedId(isExpanded ? null : t.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setExpandedId(isExpanded ? null : t.id);
+                  }
+                }}
+                className="flex w-full cursor-pointer items-start justify-between gap-3 text-left"
+              >
+                <div className="flex items-start gap-3">
+                  <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                  <div>
+                    <p className="text-sm font-medium text-text-primary">{t.subject}</p>
+                    <Link
+                      href={`/admin/users/${t.user_id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="relative z-10 text-xs text-text-muted hover:text-gold hover:underline"
+                    >
+                      {t.user?.full_name || t.user?.email}
+                    </Link>
+                    <p className="mt-1 text-xs text-text-muted/70">{formatDateTime(t.created_at)}</p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className={statusBadge[t.status]}>{t.status.replace("_", " ")}</span>
+                  <ChevronDown className={`h-4 w-4 text-text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                 </div>
               </div>
-              <span className={statusBadge[t.status]}>{t.status.replace("_", " ")}</span>
-            </button>
 
-            {expandedId === t.id && (
-              <>
-                <p className="mt-3 border-t border-white/5 pt-3 text-sm text-text-primary/80">{t.message}</p>
-                <TicketReplyForm ticket={t} adminId={adminId} />
-              </>
-            )}
-          </div>
-        ))}
+              {isExpanded && (
+                <>
+                  <p className="mt-3 whitespace-pre-wrap border-t border-white/5 pt-3 text-sm text-text-primary/80">
+                    {t.message}
+                  </p>
+                  <TicketReplyForm ticket={t} adminId={adminId} />
+                </>
+              )}
+            </div>
+          );
+        })}
         {filtered.length === 0 && (
           <p className="py-8 text-center text-sm text-text-muted">No tickets match this filter.</p>
         )}

@@ -2,7 +2,6 @@
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { Info } from "lucide-react";
-import RiskBanner from "@/components/shared/RiskBanner";
 
 // Deterministic illustrative dataset — NOT live performance data.
 const illustrativeData = Array.from({ length: 12 }, (_, i) => ({
@@ -41,8 +40,6 @@ export default function PerformancePlaceholder() {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-
-        <RiskBanner variant="compact" className="mt-6" />
       </div>
     </section>
   );

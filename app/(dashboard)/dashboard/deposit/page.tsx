@@ -22,7 +22,7 @@ export default async function DepositPage() {
         <p className="mt-1 text-sm text-text-muted">Fund your account via USDT (ERC20 / TRC20 / BEP20).</p>
       </div>
 
-      <RiskBanner variant="full" />
+      <RiskBanner variant="compact" />
 
       <div className="glass-card flex items-start gap-3 border-gold/20 p-5">
         <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-gold" />

@@ -40,14 +40,14 @@ export default async function PortfolioPage() {
       </div>
 
       <PerformanceChart snapshots={snapshots ?? []} />
-      <RiskBanner variant="compact" />
+      <RiskBanner variant="line" />
 
       {!hasLiveMt5 && (
         <div className="glass-card p-6">
           <p className="text-sm text-text-primary/90">
-            Your account figures are currently reviewed and recorded manually by our team. Live
-            MT5 syncing will replace this process once connected — your statements will look and
-            work exactly the same either way.
+            Your account figures are currently reviewed and recorded manually by our team, with
+            automated live syncing planned for the future — your statements will look and work
+            exactly the same either way.
           </p>
         </div>
       )}
@@ -58,7 +58,7 @@ export default async function PortfolioPage() {
             <Cpu className="h-5 w-5" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-text-primary">MT5 Integration Status</p>
+            <p className="text-sm font-semibold text-text-primary">Live Sync Status</p>
             <p className="mt-0.5 text-xs text-text-muted">Coming soon — not yet connected.</p>
           </div>
         </div>

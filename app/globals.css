@@ -54,6 +54,29 @@ body {
     @apply w-full rounded-lg border border-black/15 bg-black/[0.02] px-4 py-3 text-text-primary placeholder:text-text-muted outline-none transition-all focus:border-gold/50 focus:ring-1 focus:ring-gold/50 dark:border-white/10 dark:bg-white/[0.03];
   }
 
+  /* Native <select> dropdowns don't inherit page CSS for their open popup
+     list on many browsers/mobile -- only the closed control does. Without
+     explicit background/color here, the option list can render with the
+     browser's default white background and near-invisible text on a dark
+     theme. color-scheme tells the browser which default UI chrome to use
+     as a baseline, and the explicit background/color on <option> covers
+     the rest. This targets every <select> using .input-field, not just
+     specific pages, so the fix applies everywhere a dropdown appears. */
+  select.input-field {
+    color-scheme: dark;
+  }
+  .light select.input-field {
+    color-scheme: light;
+  }
+  select.input-field option {
+    background-color: #111827;
+    color: #f9fafb;
+  }
+  .light select.input-field option {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+
   .risk-banner {
     @apply w-full rounded-xl border border-gold/20 bg-gold/[0.06] px-4 py-3 text-sm text-text-muted;
   }

@@ -34,7 +34,8 @@
     "jspdf-autotable": "^3.8.2",
     "libphonenumber-js": "^1.11.9",
     "react-select": "^5.8.1",
-    "world-countries": "^5.0.0"
+    "world-countries": "^5.0.0",
+    "nextjs-toploader": "^1.6.12"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",

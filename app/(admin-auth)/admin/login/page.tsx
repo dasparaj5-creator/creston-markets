@@ -10,6 +10,7 @@ import { ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import Logo from "@/components/shared/Logo";
+import PasswordInput from "@/components/shared/PasswordInput";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -82,7 +83,7 @@ export default function AdminLoginPage() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium text-text-muted">Password</label>
-            <input {...register("password")} type="password" className="input-field" />
+            <PasswordInput {...register("password")} />
             {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
           </div>
           <button type="submit" disabled={loading} className="btn-primary w-full">

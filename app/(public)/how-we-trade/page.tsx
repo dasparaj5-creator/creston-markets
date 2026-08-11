@@ -188,7 +188,7 @@ export default function HowWeTradePage() {
       {/* Risk disclaimer */}
       <section className="px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <RiskBanner variant="compact" />
+          <RiskBanner variant="line" />
           <p className="mt-4 text-center text-xs text-text-muted">
             All trading involves risk. Capital allocated through Creston
             Markets participates in live market activity and is subject to

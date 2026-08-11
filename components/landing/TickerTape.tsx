@@ -29,6 +29,14 @@ const SYMBOLS = [
  * The script must be re-injected whenever config (like colorTheme) needs
  * to change, since TradingView's embed scripts read their JSON config once
  * at injection time and render a static iframe from it.
+ *
+ * PERFORMANCE: this widget alone pulls ~50 network requests and opens a
+ * long-lived WebSocket to TradingView's servers, which can dominate a
+ * page's total load time if it starts immediately. We defer injection
+ * until the browser is idle (via requestIdleCallback, falling back to a
+ * short timeout on browsers without it) so it never competes with our
+ * own page's critical content for load priority -- the rest of the page
+ * becomes interactive first, and the ticker fills in a moment later.
  */
 export default function TickerTape() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -38,24 +46,41 @@ export default function TickerTape() {
     const container = containerRef.current;
     if (!container) return;
 
-    container.innerHTML = "";
+    let cancelled = false;
 
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    container.appendChild(widgetDiv);
+    const inject = () => {
+      if (cancelled || !container) return;
+      container.innerHTML = "";
 
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      symbols: SYMBOLS,
-      showSymbolLogo: true,
-      colorTheme: theme,
-      isTransparent: true,
-      displayMode: "adaptive",
-      locale: "en",
-    });
-    container.appendChild(script);
+      const widgetDiv = document.createElement("div");
+      widgetDiv.className = "tradingview-widget-container__widget";
+      container.appendChild(widgetDiv);
+
+      const script = document.createElement("script");
+      script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        symbols: SYMBOLS,
+        showSymbolLogo: true,
+        colorTheme: theme,
+        isTransparent: true,
+        displayMode: "adaptive",
+        locale: "en",
+      });
+      container.appendChild(script);
+    };
+
+    const ric = (window as any).requestIdleCallback;
+    const idleHandle = ric ? ric(inject, { timeout: 2000 }) : setTimeout(inject, 300);
+
+    return () => {
+      cancelled = true;
+      if (ric && (window as any).cancelIdleCallback) {
+        (window as any).cancelIdleCallback(idleHandle);
+      } else {
+        clearTimeout(idleHandle);
+      }
+    };
   }, [theme]);
 
   return (

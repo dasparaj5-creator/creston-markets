@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { KeyRound } from "lucide-react";
+import PasswordInput from "@/components/shared/PasswordInput";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 
@@ -52,12 +53,12 @@ export default function ChangePasswordForm() {
       <h2 className="text-sm font-semibold text-text-primary">Change Password</h2>
       <div>
         <label className="mb-1.5 block text-xs font-medium text-text-muted">New Password</label>
-        <input {...register("newPassword")} type="password" className="input-field" />
+        <PasswordInput {...register("newPassword")} />
         {errors.newPassword && <p className="mt-1 text-xs text-danger">{errors.newPassword.message}</p>}
       </div>
       <div>
         <label className="mb-1.5 block text-xs font-medium text-text-muted">Confirm New Password</label>
-        <input {...register("confirmPassword")} type="password" className="input-field" />
+        <PasswordInput {...register("confirmPassword")} />
         {errors.confirmPassword && <p className="mt-1 text-xs text-danger">{errors.confirmPassword.message}</p>}
       </div>
       <button type="submit" disabled={saving} className="btn-secondary">

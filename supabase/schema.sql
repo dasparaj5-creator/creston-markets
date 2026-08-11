@@ -249,25 +249,34 @@ create table if not exists referral_config (
 
 -- ---------------------------------------------------------------------------
 -- TABLE: commission_config
--- Versioned, per-level configuration for the 5-level referral & earnings
--- structure. NEVER updated in place -- every change inserts a new row with
--- a fresh effective_from timestamp, so historical commission calculations
--- can always look up "what rate was active at the time this was earned."
--- The row with the latest effective_from <= now() is the active config.
+-- Depth-based configuration for the 5-layer referral & earnings structure.
+-- CRITICAL DESIGN NOTE: this is NOT "rate for level N" -- it's "rate for
+-- position P, when the chain is exactly D layers deep". Five completely
+-- separate tables exist (chain_depth 1 through 5), because a 2-person
+-- chain and a 5-person chain split their $25/10% pools differently, not
+-- as a partial slice of the 5-layer table. Position 1 within a table is
+-- always the person NEAREST the newest joiner (the largest share);
+-- position D (the last one) is furthest away.
+--
+-- NEVER updated in place -- every change inserts a new row with a fresh
+-- effective_from timestamp, so historical commission calculations can
+-- always look up "what rate was active at the time this was earned."
 -- ---------------------------------------------------------------------------
 create table if not exists commission_config (
   id uuid primary key default uuid_generate_v4(),
-  level integer not null check (level between 1 and 5),
+  chain_depth integer not null check (chain_depth between 1 and 5),
+  position integer not null check (position between 1 and 5),
   joining_bonus_amount numeric not null default 0,
   joining_bonus_enabled boolean not null default true,
   profit_share_percent numeric not null default 0,
   profit_share_enabled boolean not null default true,
   effective_from timestamptz not null default now(),
   created_by uuid references users(id),
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  constraint chk_position_within_depth check (position <= chain_depth)
 );
 
-create index if not exists idx_commission_config_level on commission_config(level);
+create index if not exists idx_commission_config_depth_position on commission_config(chain_depth, position);
 create index if not exists idx_commission_config_effective on commission_config(effective_from desc);
 
 -- ---------------------------------------------------------------------------
@@ -289,7 +298,8 @@ create table if not exists commission_records (
   id uuid primary key default uuid_generate_v4(),
   beneficiary_id uuid not null references users(id),      -- who earns this commission
   source_user_id uuid not null references users(id),      -- whose activity triggered it
-  level integer not null check (level between 1 and 5),
+  chain_depth integer not null check (chain_depth between 1 and 5), -- which table was used (1-5 layer)
+  position integer not null check (position between 1 and 5),      -- this beneficiary's position within that table (1 = nearest)
   commission_type commission_type_enum not null,
   -- Frozen values at time of calculation -- never recalculated on config change:
   rate_at_time numeric,                 -- profit_share_percent used (profit_share only)
@@ -318,12 +328,36 @@ create index if not exists idx_commission_records_status on commission_records(s
 create table if not exists commission_config_audit (
   id uuid primary key default uuid_generate_v4(),
   changed_by uuid references users(id),
-  level integer not null,
+  chain_depth integer not null,
+  position integer not null,
   field_changed text not null,          -- e.g. 'joining_bonus_amount', 'profit_share_percent'
   old_value text,
   new_value text,
   changed_at timestamptz default now()
 );
+
+-- ---------------------------------------------------------------------------
+-- TABLE: commission_notifications
+-- One row per "you earned a commission" event, surfaced to the beneficiary
+-- in their dashboard and (once SMTP is configured) via email. Distinct
+-- from commission_records itself so read/unread state and notification
+-- delivery can be tracked independently of the underlying financial record.
+-- ---------------------------------------------------------------------------
+create table if not exists commission_notifications (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references users(id),               -- the beneficiary being notified
+  commission_record_id uuid not null references commission_records(id) on delete cascade,
+  source_user_id uuid not null references users(id),        -- whose activity triggered the earning
+  chain_depth integer not null,
+  position integer not null,                                 -- which level (L1-L5) this user earned at
+  commission_type commission_type_enum not null,
+  is_read boolean not null default false,
+  email_sent_at timestamptz,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_commission_notifications_user on commission_notifications(user_id);
+create index if not exists idx_commission_notifications_unread on commission_notifications(user_id, is_read);
 
 -- ---------------------------------------------------------------------------
 -- TABLE: announcements
@@ -409,6 +443,7 @@ alter table deposit_proofs enable row level security;
 alter table commission_config enable row level security;
 alter table commission_records enable row level security;
 alter table commission_config_audit enable row level security;
+alter table commission_notifications enable row level security;
 
 -- helper: is current user an admin
 create or replace function is_admin() returns boolean as $$
@@ -529,6 +564,12 @@ create policy "commission_records_admin_write" on commission_records for all
 create policy "commission_config_audit_admin_only" on commission_config_audit for select using (is_admin());
 create policy "commission_config_audit_insert_admin" on commission_config_audit for insert with check (is_admin());
 
+-- commission_notifications: user sees/marks-read their own, system inserts via security-definer triggers
+create policy "commission_notifications_select_own" on commission_notifications for select
+  using (auth.uid() = user_id or is_admin());
+create policy "commission_notifications_update_own" on commission_notifications for update
+  using (auth.uid() = user_id);
+
 -- error_logs: admin only
 create policy "error_logs_admin_only" on error_logs for select using (is_admin());
 create policy "error_logs_insert_any" on error_logs for insert with check (true);
@@ -565,9 +606,12 @@ create or replace function handle_deposit_approval() returns trigger as $$
 declare
   v_user users%rowtype;
   v_config referral_config%rowtype;
-  v_upline_id uuid;
-  v_level integer;
+  v_upline_ids uuid[] := '{}';
+  v_walker uuid;
+  v_chain_depth integer;
+  v_position integer;
   v_commission_config commission_config%rowtype;
+  v_new_record_id uuid;
 begin
   if new.status = 'approved' and old.status <> 'approved' then
     select * into v_user from users where id = new.user_id;
@@ -576,7 +620,8 @@ begin
       update users set account_active_since = now() where id = new.user_id;
       update deposits set is_first_deposit = true where id = new.id;
 
-      -- Legacy single-tier bonus (backward compat only)
+      -- Legacy single-tier bonus (backward compat only, unrelated to the
+      -- 5-table depth-based system below)
       if v_user.referred_by is not null then
         select * into v_config from referral_config order by updated_at desc limit 1;
 
@@ -594,33 +639,57 @@ begin
         on conflict (referred_user_id) do nothing;
       end if;
 
-      -- Multi-level joining bonus: walk up the referred_by chain up to 5
-      -- levels. Stops early (no error) if the chain is shorter than 5.
-      v_upline_id := v_user.referred_by;
-      v_level := 1;
-
-      while v_upline_id is not null and v_level <= 5 loop
-        select * into v_commission_config
-        from commission_config
-        where level = v_level and effective_from <= now()
-        order by effective_from desc
-        limit 1;
-
-        if found and v_commission_config.joining_bonus_enabled and v_commission_config.joining_bonus_amount > 0 then
-          insert into commission_records (
-            beneficiary_id, source_user_id, level, commission_type,
-            bonus_amount_at_time, base_amount, commission_earned,
-            status, source_deposit_id
-          ) values (
-            v_upline_id, v_user.id, v_level, 'joining_bonus',
-            v_commission_config.joining_bonus_amount, new.amount, v_commission_config.joining_bonus_amount,
-            'pending', new.id
-          );
-        end if;
-
-        select referred_by into v_upline_id from users where id = v_upline_id;
-        v_level := v_level + 1;
+      -- ---------------------------------------------------------------
+      -- Depth-based joining bonus distribution.
+      --
+      -- Step 1: walk up the referred_by chain and collect up to 5 upline
+      -- ids, nearest first. This determines the ACTUAL chain depth (1-5),
+      -- which decides which of the five preset tables applies -- NOT a
+      -- fixed "level 1 always means root referrer" scheme. Anyone beyond
+      -- the 5th position is simply never collected and earns nothing on
+      -- this event, matching the confirmed roll-off behavior.
+      -- ---------------------------------------------------------------
+      v_walker := v_user.referred_by;
+      while v_walker is not null and array_length(v_upline_ids, 1) is distinct from 5 loop
+        v_upline_ids := array_append(v_upline_ids, v_walker);
+        select referred_by into v_walker from users where id = v_walker;
       end loop;
+
+      v_chain_depth := coalesce(array_length(v_upline_ids, 1), 0);
+
+      -- Step 2: for each collected upline member, look up their position's
+      -- rate within the table matching the ACTUAL chain depth, and record
+      -- a frozen commission.
+      if v_chain_depth > 0 then
+        for v_position in 1..v_chain_depth loop
+          select * into v_commission_config
+          from commission_config
+          where chain_depth = v_chain_depth
+            and position = v_position
+            and effective_from <= now()
+          order by effective_from desc
+          limit 1;
+
+          if found and v_commission_config.joining_bonus_enabled and v_commission_config.joining_bonus_amount > 0 then
+            insert into commission_records (
+              beneficiary_id, source_user_id, chain_depth, position, commission_type,
+              bonus_amount_at_time, base_amount, commission_earned,
+              status, source_deposit_id
+            ) values (
+              v_upline_ids[v_position], v_user.id, v_chain_depth, v_position, 'joining_bonus',
+              v_commission_config.joining_bonus_amount, new.amount, v_commission_config.joining_bonus_amount,
+              'pending', new.id
+            )
+            returning id into v_new_record_id;
+
+            insert into commission_notifications (
+              user_id, commission_record_id, source_user_id, chain_depth, position, commission_type
+            ) values (
+              v_upline_ids[v_position], v_new_record_id, v_user.id, v_chain_depth, v_position, 'joining_bonus'
+            );
+          end if;
+        end loop;
+      end if;
     end if;
   end if;
   return new;
@@ -642,10 +711,13 @@ create or replace function handle_snapshot_profit_share() returns trigger as $$
 declare
   v_previous_balance numeric;
   v_profit_gain numeric;
-  v_upline_id uuid;
-  v_level integer;
+  v_upline_ids uuid[] := '{}';
+  v_walker uuid;
+  v_chain_depth integer;
+  v_position integer;
   v_commission_config commission_config%rowtype;
   v_commission_amount numeric;
+  v_new_record_id uuid;
 begin
   -- Only settlement events trigger commissions.
   if not new.is_settlement then
@@ -676,35 +748,50 @@ begin
     return new;
   end if;
 
-  select referred_by into v_upline_id from users where id = new.user_id;
-  v_level := 1;
-
-  while v_upline_id is not null and v_level <= 5 loop
-    select * into v_commission_config
-    from commission_config
-    where level = v_level and effective_from <= now()
-    order by effective_from desc
-    limit 1;
-
-    if found and v_commission_config.profit_share_enabled and v_commission_config.profit_share_percent > 0 then
-      v_commission_amount := round(v_profit_gain * v_commission_config.profit_share_percent / 100, 2);
-
-      if v_commission_amount > 0 then
-        insert into commission_records (
-          beneficiary_id, source_user_id, level, commission_type,
-          rate_at_time, base_amount, commission_earned,
-          status, source_snapshot_id, settlement_period
-        ) values (
-          v_upline_id, new.user_id, v_level, 'profit_share',
-          v_commission_config.profit_share_percent, v_profit_gain, v_commission_amount,
-          'pending', new.id, new.settlement_period
-        );
-      end if;
-    end if;
-
-    select referred_by into v_upline_id from users where id = v_upline_id;
-    v_level := v_level + 1;
+  -- Walk up to 5 upline members, nearest first, same as the joining bonus
+  -- logic -- this determines chain depth and which preset table applies.
+  select referred_by into v_walker from users where id = new.user_id;
+  while v_walker is not null and array_length(v_upline_ids, 1) is distinct from 5 loop
+    v_upline_ids := array_append(v_upline_ids, v_walker);
+    select referred_by into v_walker from users where id = v_walker;
   end loop;
+
+  v_chain_depth := coalesce(array_length(v_upline_ids, 1), 0);
+
+  if v_chain_depth > 0 then
+    for v_position in 1..v_chain_depth loop
+      select * into v_commission_config
+      from commission_config
+      where chain_depth = v_chain_depth
+        and position = v_position
+        and effective_from <= now()
+      order by effective_from desc
+      limit 1;
+
+      if found and v_commission_config.profit_share_enabled and v_commission_config.profit_share_percent > 0 then
+        v_commission_amount := round(v_profit_gain * v_commission_config.profit_share_percent / 100, 2);
+
+        if v_commission_amount > 0 then
+          insert into commission_records (
+            beneficiary_id, source_user_id, chain_depth, position, commission_type,
+            rate_at_time, base_amount, commission_earned,
+            status, source_snapshot_id, settlement_period
+          ) values (
+            v_upline_ids[v_position], new.user_id, v_chain_depth, v_position, 'profit_share',
+            v_commission_config.profit_share_percent, v_profit_gain, v_commission_amount,
+            'pending', new.id, new.settlement_period
+          )
+          returning id into v_new_record_id;
+
+          insert into commission_notifications (
+            user_id, commission_record_id, source_user_id, chain_depth, position, commission_type
+          ) values (
+            v_upline_ids[v_position], v_new_record_id, new.user_id, v_chain_depth, v_position, 'profit_share'
+          );
+        end if;
+      end if;
+    end loop;
+  end if;
 
   return new;
 end;
@@ -758,17 +845,37 @@ create trigger trg_new_auth_user after insert on auth.users
   for each row execute function handle_new_auth_user();
 
 -- ============================================================================
--- Default commission_config seed -- L1-L5 defaults per spec. Admin can
--- change these later; each change inserts a new versioned row rather than
--- updating these.
+-- Default commission_config seed -- exact values confirmed by the client,
+-- covering all five depth tables (1 through 5 layers). Admin can change
+-- these later via the admin panel; each change inserts a new versioned
+-- row rather than updating these in place.
 -- ============================================================================
-insert into commission_config (level, joining_bonus_amount, joining_bonus_enabled, profit_share_percent, profit_share_enabled)
+insert into commission_config (chain_depth, position, joining_bonus_amount, joining_bonus_enabled, profit_share_percent, profit_share_enabled)
 values
-  (1, 10, true, 5, true),
-  (2, 7, true, 4, true),
-  (3, 4, true, 3, true),
-  (4, 3, true, 2, true),
-  (5, 1, true, 1, true)
+  -- 1 layer: sole referrer gets the full pool
+  (1, 1, 25, true, 10, true),
+
+  -- 2 layers: nearest / 2nd nearest
+  (2, 1, 15, true, 6, true),
+  (2, 2, 10, true, 4, true),
+
+  -- 3 layers
+  (3, 1, 15, true, 4, true),
+  (3, 2, 6, true, 3.5, true),
+  (3, 3, 4, true, 2.5, true),
+
+  -- 4 layers
+  (4, 1, 15, true, 5, true),
+  (4, 2, 6, true, 2.5, true),
+  (4, 3, 3, true, 1.5, true),
+  (4, 4, 1, true, 1, true),
+
+  -- 5 layers
+  (5, 1, 15, true, 5, true),
+  (5, 2, 5, true, 2, true),
+  (5, 3, 3, true, 1, true),
+  (5, 4, 2, true, 1, true),
+  (5, 5, 1, true, 1, true)
 on conflict do nothing;
 
 -- ============================================================================

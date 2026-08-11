@@ -59,7 +59,8 @@ export type CommissionStatus = "pending" | "paid";
 
 export interface CommissionConfigRow {
   id: string;
-  level: number;
+  chain_depth: number;
+  position: number;
   joining_bonus_amount: number;
   joining_bonus_enabled: boolean;
   profit_share_percent: number;
@@ -73,7 +74,8 @@ export interface CommissionRecord {
   id: string;
   beneficiary_id: string;
   source_user_id: string;
-  level: number;
+  chain_depth: number;
+  position: number;
   commission_type: CommissionType;
   rate_at_time: number | null;
   bonus_amount_at_time: number | null;
@@ -91,11 +93,25 @@ export interface CommissionRecord {
 export interface CommissionConfigAudit {
   id: string;
   changed_by: string | null;
-  level: number;
+  chain_depth: number;
+  position: number;
   field_changed: string;
   old_value: string | null;
   new_value: string | null;
   changed_at: string;
+}
+
+export interface CommissionNotification {
+  id: string;
+  user_id: string;
+  commission_record_id: string;
+  source_user_id: string;
+  chain_depth: number;
+  position: number;
+  commission_type: CommissionType;
+  is_read: boolean;
+  email_sent_at: string | null;
+  created_at: string;
 }
 
 export type CryptoNetwork = "ERC20" | "TRC20" | "BEP20";

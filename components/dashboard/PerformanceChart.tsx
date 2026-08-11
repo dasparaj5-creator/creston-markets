@@ -60,7 +60,7 @@ export default function PerformanceChart({ snapshots }: { snapshots: PortfolioSn
         <ShieldCheck className="h-4 w-4 text-success" />
         <p className="text-sm font-medium text-text-primary">
           Account Performance —{" "}
-          {latestSource === "mt5_api" ? "Live (MT5)" : "Verified by Creston Markets"}
+          {latestSource === "mt5_api" ? "Live" : "Verified by Creston Markets"}
         </p>
       </div>
       <ResponsiveContainer width="100%" height={220}>

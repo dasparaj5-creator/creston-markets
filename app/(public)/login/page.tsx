@@ -11,6 +11,7 @@ import { Mail, Lock, LogIn } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import Logo from "@/components/shared/Logo";
+import PasswordInput from "@/components/shared/PasswordInput";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -89,10 +90,11 @@ export default function LoginPage() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-text-muted">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-              <input {...register("password")} type="password" placeholder="••••••••" className="input-field pl-10" />
-            </div>
+            <PasswordInput
+              {...register("password")}
+              placeholder="••••••••"
+              leftIcon={<Lock className="h-4 w-4" />}
+            />
             {errors.password && <p className="mt-1 text-xs text-danger">{errors.password.message}</p>}
           </div>
 

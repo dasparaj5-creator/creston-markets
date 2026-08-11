@@ -9,15 +9,11 @@ import ReferralExplainer from "@/components/landing/ReferralExplainer";
 import Testimonials from "@/components/landing/Testimonials";
 import FaqAccordion from "@/components/landing/FaqAccordion";
 import ContactForm from "@/components/landing/ContactForm";
-import RiskBanner from "@/components/shared/RiskBanner";
 
 export default function LandingPage() {
   return (
     <>
       <Hero />
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <RiskBanner variant="compact" />
-      </div>
       <KeyStats />
       <TradingInstruments />
       <HowItWorks />

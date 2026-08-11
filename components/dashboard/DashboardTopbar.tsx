@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, ChevronDown, LogOut, User } from "lucide-react";
+import { ChevronDown, LogOut, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import ThemeToggle from "@/components/shared/ThemeToggle";
+import NotificationsBell from "@/components/dashboard/NotificationsBell";
 import type { UserProfile } from "@/types";
 
 export default function DashboardTopbar({ profile }: { profile: UserProfile }) {
@@ -53,9 +54,7 @@ export default function DashboardTopbar({ profile }: { profile: UserProfile }) {
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <ThemeToggle />
-        <button className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-text-muted hover:text-gold">
-          <Bell className="h-4 w-4" />
-        </button>
+        <NotificationsBell userId={profile.id} />
 
         <div className="relative" ref={menuRef}>
           <button

@@ -5,14 +5,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { Send } from "lucide-react";
+import { Send, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
+import type { CryptoNetwork } from "@/types";
+
+const NETWORKS: CryptoNetwork[] = ["ERC20", "TRC20", "BEP20"];
 
 const schema = z.object({
   amount: z.coerce.number().positive("Enter an amount"),
-  paymentMethod: z.string().min(1, "Select a payment method"),
-  walletAddress: z.string().min(4, "Enter a wallet address or bank details"),
+  network: z.enum(["ERC20", "TRC20", "BEP20"], { errorMap: () => ({ message: "Select a network" }) }),
+  walletAddress: z.string().min(10, "Enter a valid USDT wallet address"),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -37,14 +40,14 @@ export default function WithdrawForm({ userId, availableBalance }: { userId: str
       const { error } = await supabase.from("withdrawals").insert({
         user_id: userId,
         amount: values.amount,
-        payment_method: values.paymentMethod,
+        payment_method: `USDT (${values.network})`,
         wallet_address: values.walletAddress,
         status: "pending",
       });
 
       if (error) throw error;
 
-      logger.info("Withdrawal request submitted", { userId, amount: values.amount });
+      logger.info("Withdrawal request submitted", { userId, amount: values.amount, network: values.network });
       toast.success("Withdrawal request submitted.");
       setSubmitted(true);
     } catch (err) {
@@ -59,8 +62,8 @@ export default function WithdrawForm({ userId, availableBalance }: { userId: str
     return (
       <div className="glass-card p-8 text-center">
         <p className="text-sm text-text-primary">
-          Your withdrawal request has been submitted as <span className="text-gold">pending</span>. It will be
-          processed once live trading operations commence.
+          Your withdrawal request has been submitted as <span className="text-gold">pending</span>. Our
+          team typically processes withdrawals within 6–8 hours.
         </p>
       </div>
     );
@@ -75,20 +78,32 @@ export default function WithdrawForm({ userId, availableBalance }: { userId: str
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-text-muted">Payment Method</label>
-        <select {...register("paymentMethod")} className="input-field">
-          <option value="">Choose a method…</option>
-          <option value="bank_transfer">Bank Transfer</option>
-          <option value="crypto">Cryptocurrency</option>
-          <option value="card">Card</option>
+        <label className="mb-1.5 block text-xs font-medium text-text-muted">Network</label>
+        <select {...register("network")} className="input-field" defaultValue="">
+          <option value="" disabled>
+            Select USDT network…
+          </option>
+          {NETWORKS.map((n) => (
+            <option key={n} value={n}>
+              USDT ({n})
+            </option>
+          ))}
         </select>
-        {errors.paymentMethod && <p className="mt-1 text-xs text-danger">{errors.paymentMethod.message}</p>}
+        {errors.network && <p className="mt-1 text-xs text-danger">{errors.network.message}</p>}
       </div>
 
       <div>
-        <label className="mb-1.5 block text-xs font-medium text-text-muted">Wallet Address / Bank Details</label>
-        <input {...register("walletAddress")} placeholder="Enter details" className="input-field" />
+        <label className="mb-1.5 block text-xs font-medium text-text-muted">Withdrawal Wallet Address</label>
+        <input {...register("walletAddress")} placeholder="Enter your USDT wallet address" className="input-field" />
         {errors.walletAddress && <p className="mt-1 text-xs text-danger">{errors.walletAddress.message}</p>}
+      </div>
+
+      <div className="flex items-start gap-2.5 rounded-lg border border-gold/20 bg-gold/5 p-3">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+        <p className="text-xs text-text-muted">
+          Please ensure your network and wallet address are entered correctly. Creston Markets is
+          not responsible for funds lost due to incorrect details provided by the client.
+        </p>
       </div>
 
       <button type="submit" disabled={submitting} className="btn-primary w-full">
