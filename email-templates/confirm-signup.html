@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Welcome to Creston Markets</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    /* Most email clients strip <style> blocks or support only a subset --
+       every visually important rule below is ALSO inlined directly on
+       the elements as a fallback. This block mainly helps clients that
+       do respect it (Apple Mail, most modern webmail) render slightly
+       more smoothly, plus it holds the mobile-responsive tweaks that
+       can't be done with inline styles alone. */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    body { margin: 0; padding: 0; width: 100% !important; height: 100% !important; background-color: #0A0F1E; }
+
+    @media screen and (max-width: 600px) {
+      .email-container { width: 100% !important; }
+      .fluid-padding { padding-left: 20px !important; padding-right: 20px !important; }
+      .headline { font-size: 24px !important; line-height: 32px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#0A0F1E;">
+  <!-- Preheader text (hidden, shown only in inbox preview) -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+    Confirm your email to activate your Creston Markets account and start onboarding.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0A0F1E;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" style="width:600px; max-width:600px; background-color:#0A0F1E;">
+
+          <!-- Logo header -->
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-family:Georgia, 'Times New Roman', serif; font-size:22px; font-weight:bold; color:#F9FAFB; letter-spacing:1px;">
+                    CRESTON <span style="color:#D4AF37;">MARKETS</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main card -->
+          <tr>
+            <td class="fluid-padding" style="background-color:#111827; border:1px solid #252D42; border-radius:16px; padding:48px 40px;">
+
+              <!-- Gold accent badge -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="background-color:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.3); border-radius:20px; padding:6px 16px; font-family:Arial, Helvetica, sans-serif; font-size:12px; font-weight:bold; color:#D4AF37; letter-spacing:1px;">
+                    ACCOUNT VERIFICATION
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Headline -->
+              <h1 class="headline" style="margin:0 0 16px 0; font-family:Georgia, 'Times New Roman', serif; font-size:28px; line-height:36px; font-weight:bold; color:#F9FAFB;">
+                Welcome aboard! <br>we're excited to have you.
+              </h1>
+
+              <p style="margin:0 0 32px 0; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:24px; color:#9CA3AF;">
+                You're one step away from accessing your Creston Markets dashboard. Click the button
+                below to confirm your email address and activate your account.
+              </p>
+
+              <!-- CTA Button (bulletproof for Outlook via VML) -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 32px 0;">
+                <tr>
+                  <td align="center" style="border-radius:8px;" bgcolor="#D4AF37">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ .ConfirmationURL }}" style="height:52px;v-text-anchor:middle;width:280px;" arcsize="15%" fillcolor="#D4AF37" stroke="f">
+                    <w:anchorlock/>
+                    <center style="color:#0A0F1E;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">Confirm Email Address</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block; padding:16px 40px; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold; color:#0A0F1E; text-decoration:none; border-radius:8px;">
+                      Confirm Email Address
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Fallback link -->
+              <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#6B7280;">
+                If the button above doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="margin:0 0 32px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; word-break:break-all;">
+                <a href="{{ .ConfirmationURL }}" style="color:#00D4FF; text-decoration:underline;">{{ .ConfirmationURL }}</a>
+              </p>
+
+              <!-- Divider -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-top:1px solid #252D42; padding-top:24px;">
+                    <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#6B7280;">
+                      If you didn't create an account with Creston Markets, you can safely ignore this
+                      email, no account will be created without confirmation.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:32px;">
+              <p style="margin:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#6B7280;">
+                Creston Markets · <a href="https://www.crestonmarkets.com" style="color:#6B7280; text-decoration:underline;">crestonmarkets.com</a>
+              </p>
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; line-height:17px; color:#4B5568;">
+                Trading involves risk. Past performance does not guarantee future results.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
