@@ -4,6 +4,11 @@ import CommissionConfigEditor from "@/components/admin/CommissionConfigEditor";
 import CommissionConfigHistory from "@/components/admin/CommissionConfigHistory";
 import CommissionRecordsTable from "@/components/admin/CommissionRecordsTable";
 
+// Commission records change frequently (every approved deposit and
+// settlement creates new ones) and admins need to see them immediately,
+// not a cached snapshot -- same reasoning as the approvals page.
+export const dynamic = "force-dynamic";
+
 export default async function AdminEarningsPage() {
   const admin = await requireAdmin();
   const supabase = createClient();

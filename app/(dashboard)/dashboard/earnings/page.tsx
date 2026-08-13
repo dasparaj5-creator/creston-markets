@@ -3,6 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { formatCurrency, maskName } from "@/lib/utils";
 import KpiCard from "@/components/dashboard/KpiCard";
+
+// Clients should see their own commission/network data live, not a
+// cached snapshot -- especially right after a referral triggers a new
+// payout, which should be reflected immediately.
+export const dynamic = "force-dynamic";
 import EarningsBreakdownTable from "@/components/dashboard/EarningsBreakdownTable";
 
 interface DownlineNode {

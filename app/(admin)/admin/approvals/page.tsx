@@ -2,6 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import ApprovalsTabs from "@/components/admin/ApprovalsTabs";
 
+// This page must always show current data -- a stale approvals queue
+// (e.g. missing a deposit submitted moments ago) is a real operational
+// risk, not just a testing inconvenience, since admins rely on this
+// list being accurate in real time. Opting out of Next.js's default
+// caching ensures every load hits the database fresh.
+export const dynamic = "force-dynamic";
+
 export default async function AdminApprovalsPage() {
   const admin = await requireAdmin();
   const supabase = createClient();
