@@ -13,7 +13,7 @@ import { test, expect } from "@playwright/test";
  * publicly-observable configuration.
  */
 
-test.describe("Security — response-level checks", () => {
+test.describe("Security, response-level checks", () => {
   test("SEC-01: HTTPS is enforced", async ({ page }) => {
     const baseURL = test.info().project.use.baseURL as string;
     if (baseURL?.includes("localhost")) test.skip();

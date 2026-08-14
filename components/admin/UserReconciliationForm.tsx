@@ -64,7 +64,7 @@ export default function UserReconciliationForm({ userId, adminId }: { userId: st
       if (error) throw error;
 
       logger.info("Reconciliation snapshot recorded from user detail page", { userId, adminId, isSettlement: values.isSettlement });
-      toast.success(values.isSettlement ? "Settlement recorded — commissions calculated." : "Entry saved.");
+      toast.success(values.isSettlement ? "Settlement recorded, commissions calculated." : "Entry saved.");
       reset();
       router.refresh();
     } catch (err) {

@@ -13,6 +13,7 @@ import {
   UserCircle,
   LifeBuoy,
   DollarSign,
+  HelpCircle,
   MoreHorizontal,
   X,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/dashboard/transactions", label: "Transactions", icon: Receipt },
   { href: "/dashboard/profile", label: "Profile", icon: UserCircle },
   { href: "/dashboard/support", label: "Support", icon: LifeBuoy },
+  { href: "/dashboard/how-it-works", label: "How It Works", icon: HelpCircle },
 ];
 
 export function DashboardSidebar() {

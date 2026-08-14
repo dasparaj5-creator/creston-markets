@@ -16,7 +16,7 @@ export default function PerformancePlaceholder() {
         <div className="mb-8 text-center">
           <h2 className="text-3xl font-bold text-text-primary sm:text-4xl">Illustrative Performance</h2>
           <p className="mt-3 flex items-center justify-center gap-2 text-sm text-gold">
-            <Info className="h-4 w-4" /> Illustrative performance — live data connected post-launch
+            <Info className="h-4 w-4" /> Illustrative performance, live data connected post-launch
           </p>
         </div>
 

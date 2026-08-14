@@ -39,7 +39,7 @@ export default function EarningsBreakdownTable({ records }: { records: EarningRo
             {records.map((r) => (
               <tr key={r.id} className="border-b border-white/5 last:border-0">
                 <td className="py-3 text-text-primary/90">
-                  {r.source_user?.full_name ? maskName(r.source_user.full_name) : "—"}
+                  {r.source_user?.full_name ? maskName(r.source_user.full_name) : ","}
                 </td>
                 <td className="py-3 text-text-primary/90">
                   Position {r.position} <span className="text-text-muted">({r.chain_depth}-layer chain)</span>
@@ -53,7 +53,7 @@ export default function EarningsBreakdownTable({ records }: { records: EarningRo
                   {r.commission_type === "profit_share" ? `${r.rate_at_time}%` : formatCurrency(r.bonus_amount_at_time ?? 0)}
                 </td>
                 <td className="py-3 text-text-primary/90">{formatCurrency(r.commission_earned)}</td>
-                <td className="py-3 text-text-primary/90">{r.settlement_period ?? "—"}</td>
+                <td className="py-3 text-text-primary/90">{r.settlement_period ?? ","}</td>
                 <td className="py-3 text-text-primary/90">{formatDate(r.created_at)}</td>
                 <td className="py-3">
                   <span className={r.status === "paid" ? "badge-success" : "badge-warning"}>{r.status}</span>

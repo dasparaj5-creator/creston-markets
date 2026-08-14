@@ -219,3 +219,31 @@ export interface SupportTicket {
   created_at: string;
   updated_at: string;
 }
+
+export interface ClientGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface ClientGroupMember {
+  group_id: string;
+  user_id: string;
+  added_by: string | null;
+  added_at: string;
+}
+
+export interface GroupCommissionOverride {
+  id: string;
+  group_id: string;
+  chain_depth: number;
+  position: number;
+  joining_bonus_amount: number | null;
+  joining_bonus_enabled: boolean;
+  profit_share_percent: number | null;
+  profit_share_enabled: boolean;
+  created_by: string | null;
+  created_at: string;
+}

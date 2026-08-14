@@ -42,9 +42,22 @@ test.describe("User & Account Management", () => {
     await page.goto("/admin/users");
     await page.getByText("chloe@example.com").click();
 
-    await page.getByRole("button", { name: /put on hold/i }).click();
+    // Don't assume Chloe starts "active" -- if a previous run of this
+    // exact test was interrupted partway through, she may already be on
+    // hold, in which case "Put on Hold" won't be present and waiting
+    // for it hangs for the full 30s timeout. Detect the actual starting
+    // state and normalize to "active" first if needed.
+    const putOnHoldButton = page.getByRole("button", { name: /put on hold/i });
+    const reactivateButton = page.getByRole("button", { name: /reactivate/i });
+
+    if (await reactivateButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await reactivateButton.click();
+      await expect(putOnHoldButton).toBeVisible({ timeout: 10000 });
+    }
+
+    await putOnHoldButton.click();
     await page.getByRole("button", { name: /confirm/i }).click();
-    await expect(page.getByRole("button", { name: /reactivate/i })).toBeVisible();
+    await expect(reactivateButton).toBeVisible();
 
     const clientContext = await context.browser()?.newContext();
     if (clientContext) {
@@ -57,8 +70,8 @@ test.describe("User & Account Management", () => {
       await clientContext.close();
     }
 
-    await page.getByRole("button", { name: /reactivate/i }).click();
-    await expect(page.getByRole("button", { name: /put on hold/i })).toBeVisible();
+    await reactivateButton.click();
+    await expect(putOnHoldButton).toBeVisible();
 
     const clientContext2 = await context.browser()?.newContext();
     if (clientContext2) {

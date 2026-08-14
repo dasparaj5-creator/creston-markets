@@ -117,7 +117,14 @@ export default function ApprovalsTabs({
             <tbody>
               {deposits.map((d) => (
                 <tr key={d.id} className="border-b border-white/5 last:border-0">
-                  <td className="py-3 text-text-primary/90">{d.user?.full_name || d.user?.email}</td>
+                  <td className="py-3 text-text-primary/90">
+                    {d.user?.full_name || d.user?.email}
+                    {d.is_plan_upgrade && (
+                      <span className="ml-2 rounded-full bg-electric/10 px-2 py-0.5 text-[10px] font-medium text-electric">
+                        Plan Upgrade
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3 text-text-primary/90">{formatCurrency(d.amount)}</td>
                   <td className="py-3"><DepositProofCell proofs={d.deposit_proofs} /></td>
                   <td className="py-3 text-text-primary/90">{formatDateTime(d.created_at)}</td>

@@ -179,7 +179,7 @@ export default function CryptoDepositForm({
           <option value="">Choose a plan…</option>
           {plans.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name} — min. {formatCurrency(p.min_deposit)}
+              {p.name}, min. {formatCurrency(p.min_deposit)}
             </option>
           ))}
         </select>

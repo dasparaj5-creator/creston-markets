@@ -27,7 +27,7 @@ export default async function ReconciliationPage() {
       <div className="glass-card flex items-start gap-3 border-gold/30 bg-gold/5 p-5">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
         <p className="text-sm text-text-primary/90">
-          <span className="font-semibold text-gold">CLIENT-VISIBLE</span> — Entries saved here are
+          <span className="font-semibold text-gold">CLIENT-VISIBLE</span>, Entries saved here are
           shown directly to the client as their account statement. Double-check figures before
           saving. This will be replaced by live automated data once connected, with no change to
           how it looks on the client&apos;s side.
@@ -39,7 +39,7 @@ export default async function ReconciliationPage() {
       {/* CSV bulk upload placeholder */}
       <div className="glass-card border-dashed border-white/20 p-6 text-center">
         <p className="text-xs uppercase tracking-wide text-text-muted">CSV Bulk Upload</p>
-        <p className="mt-2 text-sm text-text-muted">Bulk reconciliation upload — coming soon.</p>
+        <p className="mt-2 text-sm text-text-muted">Bulk reconciliation upload, coming soon.</p>
       </div>
 
       {/* Automated live sync placeholder */}
@@ -49,7 +49,7 @@ export default async function ReconciliationPage() {
         </span>
         <div>
           <p className="text-sm font-semibold text-text-primary">Live Sync Integration</p>
-          <p className="mt-0.5 text-xs text-text-muted">UI only, non-functional — Phase 2.</p>
+          <p className="mt-0.5 text-xs text-text-muted">UI only, non-functional, Phase 2.</p>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default async function ReconciliationPage() {
             <tbody>
               {(log ?? []).map((row: any) => (
                 <tr key={row.id} className="border-b border-white/5 last:border-0">
-                  <td className="py-3 text-text-primary/90">{row.user?.full_name || row.user?.email || "—"}</td>
+                  <td className="py-3 text-text-primary/90">{row.user?.full_name || row.user?.email || "N/A"}</td>
                   <td className="py-3 text-text-primary/90">{formatCurrency(row.balance)}</td>
                   <td className="py-3 text-text-primary/90">{row.return_percent}%</td>
                   <td className="py-3 text-text-primary/90">{formatDateTime(row.created_at)}</td>

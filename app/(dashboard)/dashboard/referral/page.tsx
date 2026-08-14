@@ -105,7 +105,7 @@ export default async function ReferralPage() {
                   return (
                     <tr key={b.id} className="border-b border-white/5 last:border-0">
                       <td className="py-3 text-text-primary/90">
-                        {b.referred?.full_name ? maskName(b.referred.full_name) : "—"}
+                        {b.referred?.full_name ? maskName(b.referred.full_name) : ","}
                       </td>
                       <td className="py-3 text-text-primary/90">{formatDate(b.created_at)}</td>
                       <td className="py-3">

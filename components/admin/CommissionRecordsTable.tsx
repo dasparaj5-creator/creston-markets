@@ -110,7 +110,7 @@ export default function CommissionRecordsTable({
       {selected.size > 0 && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-gold/30 bg-gold/5 p-3">
           <span className="text-sm text-text-primary">
-            {selected.size} selected — {formatCurrency(totalSelected)}
+            {selected.size} selected, {formatCurrency(totalSelected)}
           </span>
           <button onClick={handleBulkPay} disabled={processing} className="btn-primary !py-1.5 !px-4 text-xs">
             <DollarSign className="h-3.5 w-3.5" /> {processing ? "Processing..." : "Mark Selected as Paid"}
@@ -161,7 +161,7 @@ export default function CommissionRecordsTable({
                   {r.commission_type === "profit_share" ? `${r.rate_at_time}%` : formatCurrency(r.bonus_amount_at_time ?? 0)}
                 </td>
                 <td className="py-2.5 text-text-primary/90">{formatCurrency(r.commission_earned)}</td>
-                <td className="py-2.5 text-text-primary/90">{r.settlement_period ?? "—"}</td>
+                <td className="py-2.5 text-text-primary/90">{r.settlement_period ?? ","}</td>
                 <td className="py-2.5 text-text-primary/90">{formatDate(r.created_at)}</td>
                 <td className="py-2.5">
                   <span className={r.status === "paid" ? "badge-success" : "badge-warning"}>{r.status}</span>

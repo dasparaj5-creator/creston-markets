@@ -106,7 +106,7 @@ export default function NotificationsBell({ userId }: { userId: string }) {
                     <span className="font-medium">
                       {n.source_user?.full_name ? maskName(n.source_user.full_name) : "A referral"}
                     </span>{" "}
-                    triggered a {n.commission_type === "joining_bonus" ? "joining bonus" : "profit share"} —
+                    triggered a {n.commission_type === "joining_bonus" ? "joining bonus" : "profit share"} ,
                     you earned{" "}
                     <span className="text-gold">
                       {n.commission_record ? formatCurrency(n.commission_record.commission_earned) : ""}

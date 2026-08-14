@@ -75,13 +75,13 @@ export default function HowWeTradePage() {
             </StrategyCard>
 
             <StrategyCard icon={Activity} title="Volatility-Based Market Reading" delay={0.12}>
-              Markets move in phases — compression, expansion, and extension. Our
+              Markets move in phases, compression, expansion, and extension. Our
               second strategy family operates by identifying when volatility
               shifts from one phase to another, and positioning accordingly. We
               study price structure, session behavior, liquidity levels, and
               volatility signatures across timeframes to determine when
               conditions are favorable for directional exposure. We don&apos;t
-              force trades — we wait for the market to present a clearly defined
+              force trades, we wait for the market to present a clearly defined
               setup, then act with defined risk parameters.
             </StrategyCard>
 
@@ -89,7 +89,7 @@ export default function HowWeTradePage() {
               All investor capital is allocated through a PAMM (Percentage
               Allocation Management Module) structure, hosted at a regulated
               broker. This means every investor&apos;s allocation mirrors the
-              master account proportionally — gains and losses are distributed
+              master account proportionally, gains and losses are distributed
               transparently based on your allocation size. There is no pooled
               fund where returns are manufactured; your capital participates in
               the same live trades our desk executes.
@@ -120,7 +120,7 @@ export default function HowWeTradePage() {
             </TechFeature>
             <TechFeature icon={ShieldAlert} title="Automated Risk Controls" delay={0.16}>
               Hard stop parameters, drawdown limits, and position sizing rules
-              enforced at the system level — not left to discretion.
+              enforced at the system level, not left to discretion.
             </TechFeature>
             <TechFeature icon={LineChart} title="Continuous Performance Monitoring" delay={0.24}>
               Every strategy is tracked independently, with clear metrics
@@ -148,14 +148,14 @@ export default function HowWeTradePage() {
               risk per trade, maximum drawdown thresholds, and mandatory review
               periods. If a strategy underperforms against its benchmark for a
               defined period, it is paused and reassessed before resuming.
-              Capital preservation is not a secondary objective — it is built
+              Capital preservation is not a secondary objective, it is built
               into every layer of how we operate.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Why This Approach — animated background */}
+      {/* Why This Approach, animated background */}
       <section className="relative overflow-hidden border-y border-white/5 bg-hero-mesh px-4 py-20 sm:px-6 lg:px-8">
         <motion.div
           className="pointer-events-none absolute inset-0 opacity-60"
@@ -174,7 +174,7 @@ export default function HowWeTradePage() {
             Most PAMM offerings rely on a single style of trading. When that
             style falls out of favor with market conditions, performance
             suffers. Our multi-strategy framework is designed specifically to
-            reduce this dependency — arbitrage runs when markets are ranging,
+            reduce this dependency, arbitrage runs when markets are ranging,
             volatility strategies activate when conditions extend, and our risk
             controls ensure no single drawdown event can compromise the overall
             portfolio structure.

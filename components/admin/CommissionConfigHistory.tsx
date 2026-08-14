@@ -28,7 +28,7 @@ export default function CommissionConfigHistory({
               <tr key={e.id} className="border-b border-white/5 last:border-0">
                 <td className="py-2.5 text-text-primary/90">{formatDateTime(e.changed_at)}</td>
                 <td className="py-2.5 text-text-primary/90">
-                  {e.changed_by ? adminNames[e.changed_by] ?? "Unknown admin" : "—"}
+                  {e.changed_by ? adminNames[e.changed_by] ?? "Unknown admin" : ","}
                 </td>
                 <td className="py-2.5 text-text-primary/90">{e.chain_depth}-layer</td>
                 <td className="py-2.5 text-text-primary/90">Position {e.position}</td>

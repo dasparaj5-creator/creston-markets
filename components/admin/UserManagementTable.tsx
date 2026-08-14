@@ -72,9 +72,9 @@ export default function UserManagementTable({
           <tbody>
             {filtered.map((u) => (
               <tr key={u.id} className="border-b border-white/5 last:border-0">
-                <td className="py-3 text-text-primary/90">{u.full_name || "—"}</td>
+                <td className="py-3 text-text-primary/90">{u.full_name || "N/A"}</td>
                 <td className="py-3 text-text-primary/90">{u.email}</td>
-                <td className="py-3 text-text-primary/90">{u.plan_id ? planNames[u.plan_id] ?? "—" : "—"}</td>
+                <td className="py-3 text-text-primary/90">{u.plan_id ? planNames[u.plan_id] ?? "N/A" : "N/A"}</td>
                 <td className="py-3"><span className={kycBadge[u.kyc_status]}>{u.kyc_status}</span></td>
                 <td className="py-3">
                   <span className={u.is_active ? "badge-success" : "badge-neutral"}>

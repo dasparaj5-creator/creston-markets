@@ -44,9 +44,17 @@ test.describe("Navigation & Layout", () => {
   });
 
   test("NAV-07: Direct URL access to homepage anchors works", async ({ page }) => {
+    // Hash fragments are purely client-side and never sent to the
+    // server, so page.goto() doesn't reliably return a distinct
+    // response object for the fragment portion of the URL -- checking
+    // response.status() here was unreliable. Instead, confirm the page
+    // itself loaded correctly and that the target anchor section
+    // actually exists and is reachable, which is the real thing this
+    // test cares about.
     for (const anchor of ["#plans", "#faq", "#features", "#contact"]) {
-      const response = await page.goto(`/${anchor}`);
-      expect(response?.status()).toBeLessThan(400);
+      await page.goto(`/${anchor}`);
+      const sectionId = anchor.replace("#", "");
+      await expect(page.locator(`#${sectionId}`)).toBeVisible({ timeout: 10000 });
     }
   });
 

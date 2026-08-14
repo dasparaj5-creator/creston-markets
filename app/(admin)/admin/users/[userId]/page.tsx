@@ -10,6 +10,7 @@ import UserReferralTree from "@/components/admin/UserReferralTree";
 import AccountStatusActions from "@/components/admin/AccountStatusActions";
 import UserReconciliationForm from "@/components/admin/UserReconciliationForm";
 import PlanAllocationForm from "@/components/admin/PlanAllocationForm";
+import ReferralLinkForm from "@/components/admin/ReferralLinkForm";
 
 const kycBadge: Record<string, string> = {
   approved: "badge-success",
@@ -36,6 +37,7 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
     { data: earningsAsBeneficiary },
     { data: earningsAsSource },
     { data: tickets },
+    { data: allUsersForReferralPicker },
   ] = await Promise.all([
     user.plan_id ? supabase.from("plans").select("name").eq("id", user.plan_id).single() : Promise.resolve({ data: null }),
     supabase.from("plans").select("*").eq("is_active", true).order("min_deposit"),
@@ -58,6 +60,10 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
       .eq("source_user_id", user.id)
       .order("created_at", { ascending: false }),
     supabase.from("support_tickets").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+    // For the referral-linking picker -- every other user, excluding this
+    // one. Kept to a reasonable field set (no need for full profiles) and
+    // ordered by name for a usable dropdown once the client base grows.
+    supabase.from("users").select("id, full_name, email").neq("id", user.id).order("full_name"),
   ]);
 
   const totalDeposited = (deposits ?? []).filter((d) => d.status === "approved").reduce((s, d) => s + Number(d.amount), 0);
@@ -74,7 +80,7 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
       <div className="glass-card p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">{user.full_name || "—"}</h1>
+            <h1 className="text-2xl font-bold text-text-primary">{user.full_name || "N/A"}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-muted">
               <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {user.email}</span>
               {user.phone && <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {user.phone}</span>}
@@ -127,6 +133,17 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
 
       {/* Plan allocation */}
       <PlanAllocationForm userId={user.id} currentPlanId={user.plan_id} plans={allPlans ?? []} adminId={admin.id} />
+
+      {/* Manual referral chain linking -- fixes a client who missed using
+          a referral link during signup */}
+      <ReferralLinkForm
+        userId={user.id}
+        userLabel={user.full_name || user.email}
+        currentReferrerId={user.referred_by}
+        currentReferrerLabel={referredBy ? referredBy.full_name || referredBy.email : null}
+        allUsers={allUsersForReferralPicker ?? []}
+        adminId={admin.id}
+      />
 
       {/* Referral relationships */}
       <div className="glass-card p-6">

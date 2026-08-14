@@ -5,7 +5,7 @@ import { Quote } from "lucide-react";
 
 const testimonials = [
   { name: "J. Alderman", role: "Silver Plan Investor", quote: "The dashboard makes it simple to see exactly where things stand with my account." },
-  { name: "R. Okafor", role: "Gold Plan Investor", quote: "Clear reporting and responsive support — exactly what I look for in a platform." },
+  { name: "R. Okafor", role: "Gold Plan Investor", quote: "Clear reporting and responsive support, exactly what I look for in a platform." },
   { name: "M. Lindqvist", role: "Bronze Plan Investor", quote: "Onboarding was straightforward, and the risk disclosures were refreshingly upfront." },
   { name: "S. Patel", role: "Silver Plan Investor", quote: "I appreciate that the platform is clear about what's live and what's still coming." },
 ];

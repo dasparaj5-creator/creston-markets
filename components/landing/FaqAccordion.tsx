@@ -11,7 +11,7 @@ const faqs = [
   { q: "What is the minimum investment?", a: "The minimum deposit starts at $200 for the Bronze plan, $350 for Silver, and $500 for Gold." },
   { q: "How do I withdraw?", a: "Withdrawal requests are submitted from your dashboard and processed according to your plan's withdrawal schedule. In Phase 1, withdrawal is an interest-registration flow only." },
   { q: "What is KYC and why is it required?", a: "KYC (Know Your Customer) verification confirms your identity and is required to help keep the platform secure and compliant." },
-  { q: "How does the referral program work?", a: "You earn a flat, one-time bonus after someone you refer registers, makes their first deposit, and remains active for 30 days. It's single-tier — you don't earn from anyone they refer." },
+  { q: "How does the referral program work?", a: "You earn a flat, one-time bonus after someone you refer registers, makes their first deposit, and remains active for 30 days. It's single-tier, you don't earn from anyone they refer." },
   { q: "Is Creston Markets regulated?", a: "Creston Markets is not a licensed financial advisor. Please review our disclosures and conduct your own due diligence before investing." },
   { q: "What are the fees?", a: "Fee details will be published clearly ahead of any live deposit functionality being enabled." },
   { q: "Can I lose money?", a: "Yes. Trading involves risk, and it is possible to lose some or all of your invested capital." },

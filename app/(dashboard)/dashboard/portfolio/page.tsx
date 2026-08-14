@@ -46,7 +46,7 @@ export default async function PortfolioPage() {
         <div className="glass-card p-6">
           <p className="text-sm text-text-primary/90">
             Your account figures are currently reviewed and recorded manually by our team, with
-            automated live syncing planned for the future — your statements will look and work
+            automated live syncing planned for the future, your statements will look and work
             exactly the same either way.
           </p>
         </div>
@@ -59,7 +59,7 @@ export default async function PortfolioPage() {
           </span>
           <div>
             <p className="text-sm font-semibold text-text-primary">Live Sync Status</p>
-            <p className="mt-0.5 text-xs text-text-muted">Coming soon — not yet connected.</p>
+            <p className="mt-0.5 text-xs text-text-muted">Coming soon, not yet connected.</p>
           </div>
         </div>
       )}

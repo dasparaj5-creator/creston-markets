@@ -17,9 +17,15 @@ test.describe("Homepage Content", () => {
   test("HP-04: Investment Plans display correct minimums", async ({ page }) => {
     await page.goto("/");
     await page.locator("#plans").scrollIntoViewIfNeeded();
-    await expect(page.getByText("$200")).toBeVisible();
-    await expect(page.getByText("$350")).toBeVisible();
-    await expect(page.getByText("$500")).toBeVisible();
+    // The plan price renders as e.g. "$200.00" in a dedicated gold price
+    // element -- match that exact rendered string rather than a loose
+    // substring, since "$200" also appears inside unrelated descriptive
+    // paragraphs elsewhere on the page (e.g. FAQ-style copy), which
+    // causes a strict-mode violation (multiple matching elements) if
+    // matched loosely.
+    await expect(page.getByText("$200.00")).toBeVisible();
+    await expect(page.getByText("$350.00")).toBeVisible();
+    await expect(page.getByText("$500.00")).toBeVisible();
   });
 
   test("HP-05: Most Popular badge shows on exactly one plan", async ({ page }) => {
@@ -42,7 +48,13 @@ test.describe("Homepage Content", () => {
 
   test("HP-08: Illustrative Performance section shows disclaimer, not fabricated live data", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText(/illustrative performance/i)).toBeVisible();
+    // Both the section heading ("Illustrative Performance") and the
+    // disclaimer paragraph beneath it ("Illustrative performance — live
+    // data...") contain this phrase, causing a strict-mode violation on
+    // an unscoped match. The actual intent of this test is the
+    // disclaimer specifically, so match the full disclaimer sentence
+    // rather than just the shared opening words.
+    await expect(page.getByText(/illustrative performance, live data connected post-launch/i)).toBeVisible();
   });
 
   test("HP-09: Testimonials labeled as placeholder", async ({ page }) => {

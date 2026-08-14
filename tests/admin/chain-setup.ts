@@ -105,12 +105,19 @@ export async function submitDeposit(page: Page, member: TestChainMember): Promis
   // Pick whichever plan is first in the list (not "-- select a plan --").
   const planSelect = page.locator('select[name="planId"]');
   const options = await planSelect.locator("option").all();
+  let pickedPlan = false;
   for (const option of options) {
     const value = await option.getAttribute("value");
     if (value) {
       await planSelect.selectOption(value);
+      pickedPlan = true;
       break;
     }
+  }
+  if (!pickedPlan) {
+    throw new Error(
+      `No selectable plan found on the deposit form for ${member.label} -- check that at least one plan exists with is_active=true in the plans table.`
+    );
   }
 
   // $1000 comfortably clears every current plan's minimum deposit
@@ -119,8 +126,24 @@ export async function submitDeposit(page: Page, member: TestChainMember): Promis
   await page.locator('input[name="amount"]').fill("1000");
   await page.getByPlaceholder(/0x\.\.\. or transaction id/i).fill(`test-tx-${Date.now()}-${member.label}`);
 
-  await page.getByRole("button", { name: /submit deposit for verification/i }).click();
-  await page.waitForTimeout(1500);
+  const submitButton = page.getByRole("button", { name: /submit deposit for verification/i });
+
+  // The real submit button is disabled whenever no active deposit
+  // address exists for the currently selected network (activeAddress is
+  // null) -- if this happens, clicking silently does nothing rather
+  // than erroring, which is exactly the kind of failure that looks like
+  // "the approve button never appears" three steps later with no clear
+  // reason why. Check explicitly and fail loudly here instead, with a
+  // message that points at the actual configuration gap.
+  const isDisabled = await submitButton.isDisabled();
+  if (isDisabled) {
+    throw new Error(
+      `Submit Deposit button is disabled for ${member.label} -- this means no active crypto_deposit_addresses row exists for the currently selected network (defaults to TRC20). Check Admin -> Settings (or wherever deposit addresses are configured) and confirm at least one active address exists for TRC20.`
+    );
+  }
+
+  await submitButton.click();
+  await expect(page.getByText(/deposit submitted/i)).toBeVisible({ timeout: 10000 });
 }
 
 /**

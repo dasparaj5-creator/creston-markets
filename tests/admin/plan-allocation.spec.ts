@@ -15,7 +15,14 @@ test.describe("Plan Allocation", () => {
     await page.getByText("chloe@example.com").click();
 
     const planSelect = page.locator("select").filter({ hasText: /no plan|bronze|silver|gold/i }).first();
-    await planSelect.selectOption({ label: /silver/i });
+    // Playwright's selectOption({label}) requires an EXACT string match,
+    // and the real option text includes the price (e.g. "Silver — min.
+    // $350.00"), not just the plan name -- a bare "Silver" label never
+    // matches. Read the actual option value that starts with "Silver"
+    // and select by that value instead, which is more robust to the
+    // exact price formatting changing later.
+    const silverValue = await planSelect.locator("option", { hasText: /^silver/i }).getAttribute("value");
+    await planSelect.selectOption(silverValue!);
     await page.getByRole("button", { name: /save plan/i }).click();
     await expect(page.getByText(/plan set to silver/i)).toBeVisible();
 
@@ -29,7 +36,7 @@ test.describe("Plan Allocation", () => {
     await page.getByText("chloe@example.com").click();
 
     const planSelect = page.locator("select").filter({ hasText: /no plan|bronze|silver|gold/i }).first();
-    await planSelect.selectOption({ label: /no plan/i });
+    await planSelect.selectOption(""); // the "No plan" option's value is an empty string
     await page.getByRole("button", { name: /save plan/i }).click();
     await expect(page.getByText(/plan removed/i)).toBeVisible();
   });

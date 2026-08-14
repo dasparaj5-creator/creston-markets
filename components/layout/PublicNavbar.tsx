@@ -9,6 +9,7 @@ import ThemeToggle from "@/components/shared/ThemeToggle";
 const links = [
   { href: "/#about", label: "About" },
   { href: "/how-we-trade", label: "How We Trade" },
+  { href: "/how-it-works", label: "How It Works" },
   { href: "/#plans", label: "Plans" },
   { href: "/#features", label: "Features" },
   { href: "/#faq", label: "FAQ" },

@@ -79,8 +79,19 @@ test.describe("Announcements", () => {
     await page.getByRole("button", { name: /publish announcement/i }).click();
     await expect(page.getByText(/announcement published/i)).toBeVisible();
 
-    // Toggle it inactive -- the status badge doubles as the toggle button.
-    const announcementRow = page.locator("div", { hasText: title }).filter({ has: page.getByRole("button", { name: /active/i }) });
+    // Toggle it inactive -- the status badge doubles as the toggle
+    // button. The announcement list has no unique per-row test id, so
+    // page.locator("div", {hasText}) matches every ANCESTOR div
+    // containing that text too (the row, its parent, the list
+    // container...), and each of those ancestors also contains OTHER
+    // announcements' "Active" buttons -- which is exactly why the
+    // previous version matched 2-4 elements instead of 1. Scoping to
+    // the innermost element whose OWN direct text content includes the
+    // title (via :text-is on a narrow child, not an ancestor sweep)
+    // avoids that.
+    // Newest announcements sort first (created_at descending), so the
+    // one just created above is the first matching row, not the last.
+    const announcementRow = page.locator("div.rounded-lg", { hasText: title }).first();
     await announcementRow.getByRole("button", { name: /^active$/i }).click();
     await expect(announcementRow.getByRole("button", { name: /^inactive$/i })).toBeVisible();
 

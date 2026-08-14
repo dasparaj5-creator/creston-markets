@@ -56,7 +56,7 @@ export default function DebugPanel() {
     <div className="fixed bottom-4 right-4 z-[9999] flex max-h-[420px] w-[380px] flex-col overflow-hidden rounded-xl border border-white/10 bg-navy/95 shadow-glass backdrop-blur-glass">
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
         <span className="flex items-center gap-2 text-xs font-semibold text-gold">
-          <Bug className="h-3.5 w-3.5" /> Debug Panel — last {logs.length} entries
+          <Bug className="h-3.5 w-3.5" /> Debug Panel, last {logs.length} entries
         </span>
         <button onClick={() => setOpen(false)} className="text-text-muted hover:text-text-primary">
           <X className="h-4 w-4" />

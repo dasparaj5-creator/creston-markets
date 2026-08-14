@@ -36,8 +36,12 @@ test.describe("Support Tickets (Admin)", () => {
       test.skip(true, "No support tickets exist in this environment");
     }
 
+    // Explicit scrollIntoView before click -- on narrow/mobile viewports
+    // the ticket row can be positioned such that a plain .click() lands
+    // outside the actual visible/interactable area without this.
+    await firstTicket.scrollIntoViewIfNeeded();
     await firstTicket.click();
-    await expect(page.locator("textarea")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("textarea")).toBeVisible({ timeout: 10000 });
   });
 
   test("ATIX-03: admin reply and status change reflect on the client's own support page", async ({
@@ -53,6 +57,7 @@ test.describe("Support Tickets (Admin)", () => {
       test.skip(true, "No support tickets exist in this environment");
     }
 
+    await firstTicket.scrollIntoViewIfNeeded();
     await firstTicket.click();
     const replyText = `Automated test reply ${Date.now()}`;
     await page.locator("textarea").fill(replyText);

@@ -126,6 +126,8 @@ create table if not exists deposits (
   status request_status_enum not null default 'pending',
   payment_reference text,
   is_first_deposit boolean default false,
+  is_plan_upgrade boolean default false,      -- true if this deposit is a top-up to upgrade an existing plan, not a fresh deposit
+  upgrade_from_plan_id uuid references plans(id), -- the plan the client was on before this upgrade, for admin visibility
   approved_by uuid references users(id),
   approved_at timestamptz,
   created_at timestamptz default now()
@@ -612,9 +614,20 @@ declare
   v_position integer;
   v_commission_config commission_config%rowtype;
   v_new_record_id uuid;
+  v_group_override_amount numeric;
+  v_group_override_enabled boolean;
 begin
   if new.status = 'approved' and old.status <> 'approved' then
     select * into v_user from users where id = new.user_id;
+
+    -- Plan upgrade: if this deposit is tagged as an upgrade payment,
+    -- apply the new plan to the user's account immediately upon
+    -- approval -- independent of the first-deposit/joining-bonus logic
+    -- below, since an upgrade can happen at any point in a client's
+    -- lifecycle, not just their first deposit.
+    if new.is_plan_upgrade and new.plan_id is not null then
+      update users set plan_id = new.plan_id, plan_activated_at = now() where id = new.user_id;
+    end if;
 
     if v_user.account_active_since is null then
       update users set account_active_since = now() where id = new.user_id;
@@ -670,6 +683,27 @@ begin
           order by effective_from desc
           limit 1;
 
+          -- Group override check: if this specific BENEFICIARY (the
+          -- upline member who would receive this commission) belongs to
+          -- a group with an override for this exact (chain_depth,
+          -- position), that override's values REPLACE the platform-wide
+          -- config looked up above. Most-recently-created override wins
+          -- if the beneficiary is in multiple qualifying groups.
+          select gco.joining_bonus_amount, gco.joining_bonus_enabled
+          into v_group_override_amount, v_group_override_enabled
+          from group_commission_overrides gco
+          join client_group_members gm on gm.group_id = gco.group_id
+          where gm.user_id = v_upline_ids[v_position]
+            and gco.chain_depth = v_chain_depth
+            and gco.position = v_position
+          order by gco.created_at desc
+          limit 1;
+
+          if v_group_override_amount is not null then
+            v_commission_config.joining_bonus_amount := v_group_override_amount;
+            v_commission_config.joining_bonus_enabled := coalesce(v_group_override_enabled, true);
+          end if;
+
           if found and v_commission_config.joining_bonus_enabled and v_commission_config.joining_bonus_amount > 0 then
             insert into commission_records (
               beneficiary_id, source_user_id, chain_depth, position, commission_type,
@@ -718,6 +752,8 @@ declare
   v_commission_config commission_config%rowtype;
   v_commission_amount numeric;
   v_new_record_id uuid;
+  v_group_override_percent numeric;
+  v_group_override_enabled boolean;
 begin
   -- Only settlement events trigger commissions.
   if not new.is_settlement then
@@ -767,6 +803,24 @@ begin
         and effective_from <= now()
       order by effective_from desc
       limit 1;
+
+      -- Same group-override check as the joining-bonus trigger above --
+      -- see that comment for the full explanation. Applies to
+      -- profit_share fields here instead of joining_bonus fields.
+      select gco.profit_share_percent, gco.profit_share_enabled
+      into v_group_override_percent, v_group_override_enabled
+      from group_commission_overrides gco
+      join client_group_members gm on gm.group_id = gco.group_id
+      where gm.user_id = v_upline_ids[v_position]
+        and gco.chain_depth = v_chain_depth
+        and gco.position = v_position
+      order by gco.created_at desc
+      limit 1;
+
+      if v_group_override_percent is not null then
+        v_commission_config.profit_share_percent := v_group_override_percent;
+        v_commission_config.profit_share_enabled := coalesce(v_group_override_enabled, true);
+      end if;
 
       if found and v_commission_config.profit_share_enabled and v_commission_config.profit_share_percent > 0 then
         v_commission_amount := round(v_profit_gain * v_commission_config.profit_share_percent / 100, 2);
@@ -877,6 +931,72 @@ values
   (5, 4, 2, true, 1, true),
   (5, 5, 1, true, 1, true)
 on conflict do nothing;
+
+-- ============================================================================
+-- TABLE: client_groups
+-- Admin-defined groups of clients for bulk operations -- e.g. applying the
+-- same reconciliation update to 10 people at once, or overriding
+-- commission rates for a specific set of VIP clients rather than
+-- everyone platform-wide.
+-- ============================================================================
+create table if not exists client_groups (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  description text,
+  created_by uuid references users(id),
+  created_at timestamptz default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- TABLE: client_group_members
+-- Many-to-many: a client can belong to more than one group, a group has
+-- many members.
+-- ---------------------------------------------------------------------------
+create table if not exists client_group_members (
+  group_id uuid not null references client_groups(id) on delete cascade,
+  user_id uuid not null references users(id) on delete cascade,
+  added_by uuid references users(id),
+  added_at timestamptz default now(),
+  primary key (group_id, user_id)
+);
+
+create index if not exists idx_client_group_members_user on client_group_members(user_id);
+
+-- ---------------------------------------------------------------------------
+-- TABLE: group_commission_overrides
+-- Optional group-specific commission rates -- if a group has an override
+-- row for a given (chain_depth, position), that rate is used INSTEAD OF
+-- the platform-wide commission_config rate for any beneficiary who is a
+-- member of that group at the moment a commission is calculated. If a
+-- beneficiary belongs to multiple groups with overrides for the same
+-- position, the most-recently-created override wins (simple, predictable
+-- tie-break -- documented here since it's not obvious from the schema
+-- alone).
+-- ---------------------------------------------------------------------------
+create table if not exists group_commission_overrides (
+  id uuid primary key default uuid_generate_v4(),
+  group_id uuid not null references client_groups(id) on delete cascade,
+  chain_depth integer not null check (chain_depth between 1 and 5),
+  position integer not null check (position between 1 and 5),
+  joining_bonus_amount numeric,
+  joining_bonus_enabled boolean default true,
+  profit_share_percent numeric,
+  profit_share_enabled boolean default true,
+  created_by uuid references users(id),
+  created_at timestamptz default now(),
+  constraint chk_group_override_position check (position <= chain_depth)
+);
+
+create index if not exists idx_group_overrides_group on group_commission_overrides(group_id);
+create index if not exists idx_group_overrides_lookup on group_commission_overrides(chain_depth, position);
+
+alter table client_groups enable row level security;
+alter table client_group_members enable row level security;
+alter table group_commission_overrides enable row level security;
+
+create policy "client_groups_admin_all" on client_groups for all using (is_admin());
+create policy "client_group_members_admin_all" on client_group_members for all using (is_admin());
+create policy "group_commission_overrides_admin_all" on group_commission_overrides for all using (is_admin());
 
 -- ============================================================================
 -- End of schema

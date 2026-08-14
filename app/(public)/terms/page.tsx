@@ -5,7 +5,7 @@ export default function TermsPage() {
     <LegalPage title="Terms of Service" updated="August 2026">
       <p>
         This is a general description of platform terms and should be reviewed by qualified legal
-        counsel before being relied upon as a binding agreement — it covers eligibility, account
+        counsel before being relied upon as a binding agreement, it covers eligibility, account
         conduct, the referral and earnings structure, and applicable law at a summary level only.
       </p>
       <p>

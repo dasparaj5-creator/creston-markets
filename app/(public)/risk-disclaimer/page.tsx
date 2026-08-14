@@ -22,7 +22,7 @@ export default function RiskDisclaimerPage() {
         Deposits are made via cryptocurrency (USDT) and are manually verified by our team before
         being credited to an account. Withdrawals are processed via cryptocurrency to a wallet
         address you provide. It is your responsibility to ensure all wallet and network details
-        you submit are accurate — Creston Markets is not responsible for funds lost due to
+        you submit are accurate, Creston Markets is not responsible for funds lost due to
         incorrect account or wallet information supplied by the client.
       </p>
       <p>

@@ -40,8 +40,23 @@ test.describe("Registration form", () => {
     await page.goto("/register");
     await page.getByPlaceholder("Jane Doe").fill("Test User");
     await page.getByPlaceholder("you@example.com").fill(`test-${Date.now()}@example.com`);
+
+    // The mismatch error is a Zod .refine() on the whole form -- it only
+    // surfaces if every OTHER required field validates first. Country,
+    // phone, and the two checkboxes are also required, so this test
+    // needs to fill everything, not just the two password fields, or
+    // submission gets blocked earlier and "Passwords do not match"
+    // never has a chance to render.
+    await page.getByRole("combobox").click();
+    await page.getByText("United States", { exact: false }).first().click();
+    await page.getByPlaceholder("Phone number").fill("2025550100");
+
     await page.locator('input[name="password"]').fill("ValidPassword123!");
     await page.locator('input[name="confirmPassword"]').fill("DifferentPassword123!");
+
+    await page.getByRole("checkbox", { name: /terms of service/i }).check();
+    await page.getByRole("checkbox", { name: /understand that trading/i }).check();
+
     await page.getByRole("button", { name: /create account/i }).click();
     await expect(page.getByText(/passwords do not match/i)).toBeVisible();
   });

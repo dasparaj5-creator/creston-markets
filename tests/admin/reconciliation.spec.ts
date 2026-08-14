@@ -16,7 +16,15 @@ async function fillReconciliationForm(
   values: { balance: string; returnPercent: string; pnlTotal: string; pnlToday: string; pnlThisMonth: string }
 ) {
   await page.goto("/admin/reconciliation");
-  await page.locator("select").first().selectOption({ label: new RegExp(userLabel, "i") });
+  // selectOption({label}) requires a plain string (or exact-match label
+  // object) -- a RegExp is not accepted here despite being valid in many
+  // other Playwright locator methods, which is what caused this to
+  // throw "expected string, got object". User option text is just the
+  // full name, so find the matching option's actual value and select by
+  // that instead of trying to pattern-match the label directly.
+  const userSelect = page.locator("select").first();
+  const optionValue = await userSelect.locator("option", { hasText: new RegExp(userLabel, "i") }).getAttribute("value");
+  await userSelect.selectOption(optionValue!);
   await page.getByLabel(/balance/i).fill(values.balance);
   await page.getByLabel(/return %/i).fill(values.returnPercent);
   await page.getByLabel(/p&l total/i).fill(values.pnlTotal);
@@ -132,7 +140,9 @@ test.describe("Portfolio Reconciliation", () => {
     await settlementCheckbox.check();
     await expect(page.getByPlaceholder(/january 2026/i)).toBeVisible();
 
-    await page.locator("select").first().selectOption({ label: /alice/i });
+    const userSelect = page.locator("select").first();
+    const aliceValue = await userSelect.locator("option", { hasText: /alice/i }).getAttribute("value");
+    await userSelect.selectOption(aliceValue!);
     await page.getByLabel(/balance/i).fill("1000");
     await page.getByRole("button", { name: /save reconciliation entry/i }).click();
     await expect(page.getByText(/enter a settlement period label/i)).toBeVisible();
@@ -185,7 +195,9 @@ test.describe("Portfolio Reconciliation", () => {
   test("AREC-07: non-numeric input in the Balance field is rejected", async ({ page }) => {
     await adminLogin(page);
     await page.goto("/admin/reconciliation");
-    await page.locator("select").first().selectOption({ label: /alice/i });
+    const userSelect = page.locator("select").first();
+    const aliceValue = await userSelect.locator("option", { hasText: /alice/i }).getAttribute("value");
+    await userSelect.selectOption(aliceValue!);
 
     const balanceField = page.getByLabel(/balance/i);
     await balanceField.fill("not-a-number");

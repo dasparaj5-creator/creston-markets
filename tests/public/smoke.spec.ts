@@ -49,6 +49,16 @@ test.describe("Smoke Suite", () => {
 
   test("SMK-08: Log In CTA works", async ({ page }) => {
     await page.goto("/");
+
+    // On narrow viewports the desktop nav's "Log In" link is hidden
+    // (md:flex) and only the version inside the hamburger menu is
+    // reachable -- open that menu first if it's present, since a plain
+    // click on "Log In" times out on mobile without this.
+    const menuToggle = page.getByRole("button", { name: /toggle menu/i });
+    if (await menuToggle.isVisible().catch(() => false)) {
+      await menuToggle.click();
+    }
+
     await page.getByRole("link", { name: "Log In", exact: true }).first().click();
     await expect(page).toHaveURL(/\/login/);
   });

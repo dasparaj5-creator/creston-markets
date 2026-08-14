@@ -25,7 +25,7 @@ export default async function AdminUsersPage() {
 
       <div className="glass-card border-gold/20 p-4 text-xs text-text-muted">
         Note: manual balance reconciliation is handled separately under{" "}
-        <span className="font-medium text-gold">Portfolio Reconciliation</span> — internal
+        <span className="font-medium text-gold">Portfolio Reconciliation</span>, internal
         record-keeping only, never shown to clients as live performance.
       </div>
 

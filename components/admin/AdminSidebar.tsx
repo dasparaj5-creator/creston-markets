@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
+  UsersRound,
   Database,
   Gift,
   CheckSquare,
@@ -20,6 +21,7 @@ import Logo from "@/components/shared/Logo";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/groups", label: "Client Groups", icon: UsersRound },
   { href: "/admin/reconciliation", label: "Reconciliation", icon: Database },
   { href: "/admin/referrals", label: "Referral Bonuses", icon: Gift },
   { href: "/admin/approvals", label: "Approvals", icon: CheckSquare },

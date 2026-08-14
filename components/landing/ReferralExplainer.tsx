@@ -16,7 +16,7 @@ export default function ReferralExplainer() {
         <h2 className="text-3xl font-bold text-text-primary sm:text-4xl">Referral Program</h2>
         <p className="mx-auto mt-3 max-w-2xl text-text-muted">
           Refer a friend. When they invest and remain active for 30 days, you earn a flat bonus.
-          Single tier only — no downlines, no multi-level structure.
+          Single tier only, no downlines, no multi-level structure.
         </p>
 
         <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">

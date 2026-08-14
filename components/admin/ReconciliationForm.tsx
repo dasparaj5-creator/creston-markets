@@ -71,7 +71,7 @@ export default function ReconciliationForm({
       });
 
       if (values.isSettlement) {
-        toast.success("Settlement recorded — profit share commissions calculated for upline.");
+        toast.success("Settlement recorded, profit share commissions calculated for upline.");
       } else {
         toast.success("Reconciliation entry saved (routine update, no commissions triggered).");
       }
@@ -136,7 +136,7 @@ export default function ReconciliationForm({
             <p className="mt-1 text-xs text-text-muted">
               This will trigger profit share calculations for all upline members based on this
               user&apos;s gain since their last settlement. Leave unchecked for routine balance
-              corrections — those save normally without triggering any commissions.
+              corrections, those save normally without triggering any commissions.
             </p>
           </div>
         </label>

@@ -40,7 +40,7 @@ export default function AccountSummaryCard({
 
   const periodLabel =
     summary.periodStart && summary.periodEnd
-      ? `${formatDate(summary.periodStart)} — ${formatDate(summary.periodEnd)}`
+      ? `${formatDate(summary.periodStart)}, ${formatDate(summary.periodEnd)}`
       : "No data in this range";
 
   const handleExportExcel = () => {
@@ -65,7 +65,7 @@ export default function AccountSummaryCard({
     try {
       const doc = new jsPDF();
       doc.setFontSize(16);
-      doc.text("Creston Markets — Account Statement", 14, 18);
+      doc.text("Creston Markets, Account Statement", 14, 18);
       doc.setFontSize(10);
       doc.text(`Client: ${clientName}`, 14, 26);
       doc.text(`Period: ${periodLabel}`, 14, 32);

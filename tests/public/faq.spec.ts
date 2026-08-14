@@ -14,8 +14,15 @@ test.describe("FAQ Accordion", () => {
   test("FAQ-03: minimum investment answer mentions the correct figures", async ({ page }) => {
     await page.goto("/#faq");
     await page.locator("#faq").scrollIntoViewIfNeeded();
-    const minInvestmentQuestion = page.getByText(/minimum investment/i);
-    await minInvestmentQuestion.click();
-    await expect(page.getByText(/\$200/)).toBeVisible();
+
+    // Each FAQ item is a .glass-card containing a <button> (question) and
+    // a sibling <div> (answer). Scope to that specific card so the
+    // "$200" match only looks inside THIS answer, not anywhere else on
+    // the page (the Plans section elsewhere on the same homepage also
+    // shows "$200.00", which would otherwise cause a strict-mode
+    // violation on an unscoped page-wide match).
+    const minInvestmentCard = page.locator("#faq .glass-card", { hasText: /minimum investment/i });
+    await minInvestmentCard.getByRole("button").click();
+    await expect(minInvestmentCard.getByText(/\$200/)).toBeVisible();
   });
 });

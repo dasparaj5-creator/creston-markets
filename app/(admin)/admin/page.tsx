@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
             <tbody>
               {(recentUsers ?? []).map((u) => (
                 <tr key={u.id} className="border-b border-white/5 last:border-0">
-                  <td className="py-3 text-text-primary/90">{u.full_name || "—"}</td>
+                  <td className="py-3 text-text-primary/90">{u.full_name || "N/A"}</td>
                   <td className="py-3 text-text-primary/90">{u.email}</td>
                   <td className="py-3 text-text-primary/90">{formatDateTime(u.created_at)}</td>
                 </tr>

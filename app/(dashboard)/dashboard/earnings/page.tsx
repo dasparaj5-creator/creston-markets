@@ -86,7 +86,7 @@ export default async function EarningsPage() {
       <div>
         <h1 className="text-2xl font-bold text-text-primary">My Earnings</h1>
         <p className="mt-1 text-sm text-text-muted">
-          Joining bonuses and profit share across your referral network — up to 5 positions deep.
+          Joining bonuses and profit share across your referral network, up to 5 positions deep.
         </p>
       </div>
 
@@ -115,7 +115,7 @@ export default async function EarningsPage() {
           <Network className="h-4 w-4 text-gold" /> Your Network
         </h2>
         <p className="mb-4 text-xs text-text-muted">
-          The position shown is where you sit relative to that person — this is exactly what
+          The position shown is where you sit relative to that person, this is exactly what
           determines your share whenever they trigger a joining bonus or profit share event.
         </p>
         <div className="overflow-x-auto">
@@ -138,7 +138,7 @@ export default async function EarningsPage() {
               {downline.length === 0 && (
                 <tr>
                   <td colSpan={2} className="py-6 text-center text-text-muted">
-                    No one in your network yet — share your referral link to get started.
+                    No one in your network yet, share your referral link to get started.
                   </td>
                 </tr>
               )}

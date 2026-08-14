@@ -98,7 +98,7 @@ export default function CommissionConfigEditor({
             chain_depth: draft.chain_depth,
             position: draft.position,
             field_changed: "joining_bonus_amount",
-            old_value: String(existing?.joining_bonus_amount ?? "—"),
+            old_value: String(existing?.joining_bonus_amount ?? ","),
             new_value: String(draft.joining_bonus_amount),
           });
         }
@@ -108,7 +108,7 @@ export default function CommissionConfigEditor({
             chain_depth: draft.chain_depth,
             position: draft.position,
             field_changed: "profit_share_percent",
-            old_value: String(existing?.profit_share_percent ?? "—"),
+            old_value: String(existing?.profit_share_percent ?? ","),
             new_value: String(draft.profit_share_percent),
           });
         }
@@ -138,7 +138,7 @@ export default function CommissionConfigEditor({
       </div>
       <p className="text-xs text-text-muted">
         Each chain depth (1 through 5 layers) has its own independent split. The table used for any
-        given payout is whichever matches the ACTUAL number of people in that referral chain — a
+        given payout is whichever matches the ACTUAL number of people in that referral chain, a
         3-person chain always uses the 3-layer table below, never a partial slice of the 5-layer one.
       </p>
 

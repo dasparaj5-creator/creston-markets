@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import RiskBanner from "@/components/shared/RiskBanner";
 import CryptoDepositForm from "@/components/dashboard/CryptoDepositForm";
+import PlanUpgradeForm from "@/components/dashboard/PlanUpgradeForm";
 
 export default async function DepositPage() {
   const profile = await requireUser();
@@ -14,6 +15,9 @@ export default async function DepositPage() {
     supabase.from("deposits").select("*").eq("user_id", profile.id).order("created_at", { ascending: false }),
     supabase.from("crypto_deposit_addresses").select("*").eq("is_active", true),
   ]);
+
+  const currentPlan = plans?.find((p) => p.id === profile.plan_id);
+  const higherPlans = currentPlan ? (plans ?? []).filter((p) => p.min_deposit > currentPlan.min_deposit) : [];
 
   return (
     <div className="space-y-6">
@@ -32,6 +36,10 @@ export default async function DepositPage() {
           within 6–8 hours.
         </p>
       </div>
+
+      {currentPlan && higherPlans.length > 0 && (
+        <PlanUpgradeForm userId={profile.id} currentPlan={currentPlan} higherPlans={higherPlans} addresses={addresses ?? []} />
+      )}
 
       <CryptoDepositForm addresses={addresses ?? []} plans={plans ?? []} userId={profile.id} />
 

@@ -69,8 +69,15 @@ test.describe("Reports", () => {
     const totalUserRows = await page.locator("table tbody tr").count();
 
     await page.goto("/admin/reports");
-    const monthRows = page.locator("div").filter({ hasText: /^[A-Z][a-z]{2} \d{4}$/ });
-    const monthCount = await monthRows.count();
+    // Each month row is a flex container with a narrow <span> holding
+    // just the "Jan 2026"-style label (w-24 text-xs text-text-muted per
+    // the real component), not a bare full-page <div> match -- scoping
+    // to that specific span avoids matching unrelated divs elsewhere on
+    // the page that happen to contain similar-looking text as a
+    // substring, which was causing zero real matches previously despite
+    // the chart clearly rendering.
+    const monthLabels = page.locator("span.w-24");
+    const monthCount = await monthLabels.count();
 
     if (totalUserRows > 0) {
       expect(monthCount, "Growth-by-month chart should have at least one month bucket if any users exist").toBeGreaterThan(0);

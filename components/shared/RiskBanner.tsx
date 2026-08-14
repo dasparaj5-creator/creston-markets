@@ -5,7 +5,7 @@ import { AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const RISK_DISCLOSURE_TEXT =
-  "Trading in financial instruments involves significant risk of loss and may not be suitable for all investors. Past performance does not guarantee future results. The value of your investment can go down as well as up. Please ensure you fully understand the risks before investing. Creston Markets is not a licensed financial advisor. This platform connects investors to a PAMM-managed fund — capital is actively traded in live markets.";
+  "Trading in financial instruments involves significant risk of loss and may not be suitable for all investors. Past performance does not guarantee future results. The value of your investment can go down as well as up. Please ensure you fully understand the risks before investing. Creston Markets is not a licensed financial advisor. This platform connects investors to a PAMM-managed fund, capital is actively traded in live markets.";
 
 interface RiskBannerProps {
   variant?: "full" | "compact" | "line";

@@ -35,7 +35,7 @@ export default async function AdminEarningsPage() {
         <h1 className="text-2xl font-bold text-text-primary">Referral & Earnings Management</h1>
         <p className="mt-1 text-sm text-text-muted">
           5-table (1 through 5 layers) joining bonus and profit share configuration. Changes only
-          affect future earnings — all past commission records remain frozen at the rate active
+          affect future earnings, all past commission records remain frozen at the rate active
           when they were calculated.
         </p>
       </div>
