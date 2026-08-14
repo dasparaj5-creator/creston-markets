@@ -143,6 +143,8 @@ export interface Deposit {
   status: RequestStatus;
   payment_reference: string | null;
   is_first_deposit: boolean;
+  is_plan_upgrade: boolean;
+  upgrade_from_plan_id: string | null;
   approved_by: string | null;
   approved_at: string | null;
   created_at: string;

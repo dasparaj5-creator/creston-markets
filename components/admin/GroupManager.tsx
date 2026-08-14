@@ -328,7 +328,7 @@ function BulkReconciliationForm({
           pnl_this_month: pnl,
           is_settlement: isSettlement,
           settlement_period: isSettlement ? settlementPeriod.trim() : null,
-          recorded_by: adminId,
+          updated_by: adminId,
         });
 
         if (error) {

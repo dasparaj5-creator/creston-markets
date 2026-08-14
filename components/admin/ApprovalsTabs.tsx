@@ -17,6 +17,8 @@ interface DepositRow {
   amount: number;
   status: string;
   created_at: string;
+  is_plan_upgrade?: boolean;
+  upgrade_from_plan_id?: string | null;
   user?: { full_name: string | null; email: string } | null;
   deposit_proofs?: DepositProofRow[];
 }
