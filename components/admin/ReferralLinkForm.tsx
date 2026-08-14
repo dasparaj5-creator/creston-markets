@@ -13,6 +13,26 @@ interface LinkableUser {
   email: string;
 }
 
+/**
+ * Fetches the referred_by value for a single user. Pulled out as a fully
+ * standalone, explicitly-typed function (not inlined in the component)
+ * after three different inline variations all hit the same TypeScript
+ * "implicitly has type any because it is referenced in its own
+ * initializer" error inside the walk-the-chain loop below -- something
+ * about that loop's closure scope was confusing the compiler regardless
+ * of how the destructuring/typing inside it was written. An isolated
+ * function with an explicit return type has no shared scope for that
+ * inference problem to occur in at all.
+ */
+async function fetchReferredBy(
+  supabase: ReturnType<typeof createClient>,
+  targetUserId: string
+): Promise<string | null> {
+  const result = await supabase.from("users").select("referred_by").eq("id", targetUserId).maybeSingle();
+  if (!result.data) return null;
+  return result.data.referred_by;
+}
+
 export default function ReferralLinkForm({
   userId,
   userLabel,
@@ -70,12 +90,7 @@ export default function ReferralLinkForm({
           setSaving(false);
           return;
         }
-        const queryResult = await supabase
-          .from("users")
-          .select("referred_by")
-          .eq("id", walker)
-          .single();
-        const nextReferredBy: string | null = queryResult.data ? queryResult.data.referred_by : null;
+        const nextReferredBy = await fetchReferredBy(supabase, walker);
         walker = nextReferredBy;
         hops++;
       }
