@@ -146,7 +146,7 @@ export default function PlanUpgradeForm({
         {activeAddress && (
           <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
             <p className="text-xs text-text-muted">Send {formatCurrency(difference)} in USDT to:</p>
-            <p className="mt-1 break-all font-mono text-xs text-text-primary">{activeAddress.address}</p>
+            <p className="mt-1 break-all font-mono text-xs text-text-primary">{activeAddress.wallet_address}</p>
           </div>
         )}
 
