@@ -70,7 +70,11 @@ export default function ReferralLinkForm({
           setSaving(false);
           return;
         }
-        const { data: walkerRow } = await supabase.from("users").select("referred_by").eq("id", walker).single();
+        const { data: walkerRow } = await supabase
+          .from("users")
+          .select("referred_by")
+          .eq("id", walker)
+          .single<{ referred_by: string | null }>();
         walker = walkerRow?.referred_by ?? null;
         hops++;
       }
