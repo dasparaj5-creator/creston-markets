@@ -73,16 +73,21 @@ function RegisterForm() {
       // RLS on the users table requires an authenticated session for
       // reads/writes, and Supabase's email-confirmation flow means no
       // session exists yet immediately after signUp() returns -- so this
-      // lookup must happen first, using only the public referral_code
-      // column via the pre-auth-safe select the RLS policy allows.
+      // lookup must happen first, via a dedicated database function
+      // (get_user_id_by_referral_code) rather than a direct table
+      // select. A direct select was tried initially but silently
+      // returned zero rows for every anonymous visitor, since RLS
+      // blocked it before any session existed -- referred_by ended up
+      // null on every single referral-link registration as a result.
+      // The function is SECURITY DEFINER and explicitly grants execute
+      // to anonymous callers, bypassing that RLS gap correctly and
+      // narrowly (it returns only an id, nothing else about the user).
       let referredBy: string | null = null;
       if (values.referralCode) {
-        const { data: referrer } = await supabase
-          .from("users")
-          .select("id")
-          .eq("referral_code", values.referralCode)
-          .maybeSingle();
-        referredBy = referrer?.id ?? null;
+        const { data: referrerId } = await supabase.rpc("get_user_id_by_referral_code", {
+          code: values.referralCode,
+        });
+        referredBy = referrerId ?? null;
         if (values.referralCode && !referredBy) {
           logger.warn("Referral code provided but not found", { code: values.referralCode });
         }

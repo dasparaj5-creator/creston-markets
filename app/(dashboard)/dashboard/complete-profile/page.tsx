@@ -59,17 +59,19 @@ function CompleteProfileForm() {
       const country = findCountryByCode(values.countryCode);
       const fullPhoneNumber = `${country?.dialCode ?? ""}${values.phoneNational}`;
 
-      // Pick up a referral code stashed before the Google redirect, if any.
+      // Pick up a referral code stashed before the Google redirect, if
+      // any. Uses the same get_user_id_by_referral_code() function as
+      // the main registration page, for the same reason: even though
+      // this user IS logged in by this point (unlike a fresh
+      // registration), the existing RLS policy on users only allows
+      // reading your OWN row, not someone else's -- so a direct select
+      // for the REFERRER's id would still be silently blocked here too.
       let referredBy: string | null = null;
       const pendingCode =
         typeof window !== "undefined" ? sessionStorage.getItem("cm_pending_referral_code") : null;
       if (pendingCode) {
-        const { data: referrer } = await supabase
-          .from("users")
-          .select("id")
-          .eq("referral_code", pendingCode)
-          .maybeSingle();
-        referredBy = referrer?.id ?? null;
+        const { data: referrerId } = await supabase.rpc("get_user_id_by_referral_code", { code: pendingCode });
+        referredBy = referrerId ?? null;
         sessionStorage.removeItem("cm_pending_referral_code");
       }
 
