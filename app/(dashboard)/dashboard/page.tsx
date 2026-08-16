@@ -2,7 +2,9 @@ import { Wallet, TrendingUp, Layers, Gift } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { formatCurrency, formatDate, slugifyStatus } from "@/lib/utils";
-import KpiCard from "@/components/dashboard/KpiCard";
+import AnimatedKpiCard from "@/components/dashboard/AnimatedKpiCard";
+import WelcomeHero from "@/components/dashboard/WelcomeHero";
+import PlanProgressCard from "@/components/dashboard/PlanProgressCard";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
 import AnnouncementBanner from "@/components/dashboard/AnnouncementBanner";
 import Link from "next/link";
@@ -11,11 +13,19 @@ export default async function DashboardHomePage() {
   const profile = await requireUser();
   const supabase = createClient();
 
-  const [{ data: plan }, { data: snapshots }, { data: recentTx }, { data: commissions }, { data: announcements }, { count: directReferralCount }] =
-    await Promise.all([
+  const [
+    { data: plan },
+    { data: allPlans },
+    { data: snapshots },
+    { data: recentTx },
+    { data: commissions },
+    { data: announcements },
+    { count: directReferralCount },
+  ] = await Promise.all([
       profile.plan_id
         ? supabase.from("plans").select("*").eq("id", profile.plan_id).single()
         : Promise.resolve({ data: null }),
+      supabase.from("plans").select("*").eq("is_active", true).order("min_deposit"),
       supabase.from("portfolio_snapshots").select("*").eq("user_id", profile.id),
       supabase
         .from("deposits")
@@ -63,24 +73,24 @@ export default async function DashboardHomePage() {
     <div className="space-y-6">
       <AnnouncementBanner announcements={announcements ?? []} />
 
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
-        <p className="mt-1 text-sm text-text-muted">Here&apos;s an overview of your account.</p>
-      </div>
+      <WelcomeHero fullName={profile.full_name} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(portfolioValue)} />
-        <KpiCard
+        <AnimatedKpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(portfolioValue)} index={0} accent />
+        <AnimatedKpiCard
           icon={TrendingUp}
           label="Total Return"
           value={`${totalReturn.toFixed(2)}%`}
           trend={latestSnapshot ? undefined : "No statement yet"}
+          index={1}
         />
-        <KpiCard icon={Layers} label="Plan Status" value={plan?.name ?? "No Plan Selected"} />
-        <KpiCard icon={Gift} label="Referral Bonus Earned" value={formatCurrency(bonusEarned)} />
+        <AnimatedKpiCard icon={Layers} label="Plan Status" value={plan?.name ?? "No Plan Selected"} index={2} />
+        <AnimatedKpiCard icon={Gift} label="Referral Bonus Earned" value={formatCurrency(bonusEarned)} index={3} />
       </div>
 
       <PerformanceChart snapshots={snapshots ?? []} />
+
+      <PlanProgressCard currentPlan={plan} allPlans={allPlans ?? []} currentBalance={portfolioValue} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="glass-card p-6">
