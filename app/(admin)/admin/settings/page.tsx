@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import AdminSettingsForm from "@/components/admin/AdminSettingsForm";
+import AdminPasswordForm from "@/components/admin/AdminPasswordForm";
 import CryptoAddressManager from "@/components/admin/CryptoAddressManager";
 
 export default async function AdminSettingsPage() {
@@ -17,6 +18,7 @@ export default async function AdminSettingsPage() {
           Platform configuration. Referral bonus config lives under Referral Bonus Management.
         </p>
       </div>
+      <AdminPasswordForm />
       <CryptoAddressManager addresses={addresses ?? []} adminId={admin.id} />
       <AdminSettingsForm />
     </div>

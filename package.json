@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx supabase/seed.ts",
+    "seed:chain": "tsx supabase/seed-referral-chain.ts",
     "test": "playwright test",
     "test:ui": "playwright test --ui"
   },
