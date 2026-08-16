@@ -160,8 +160,51 @@ async function main() {
   console.log("  - E's deposit paid D $15 + C $6 + B $3 + A $1 (4-layer)");
   console.log("  - F's deposit paid E $15 + D $5 + C $3 + B $2 + A $1 (5-layer, full table)");
   console.log("  - G's deposit paid F/E/D/C/B, but NOT A (roll-off -- A is now 6 steps away)");
+
+  // Step 4: seed 10 days of backdated, randomized daily P&L for the
+  // whole chain -- directly exercises the backdating fix from
+  // migration_012/013, and gives you a real multi-day performance
+  // history to look at on each test account's Portfolio page without
+  // manually entering 10 days x 7 people by hand in the admin UI.
+  console.log("\nSeeding 10 days of backdated daily P&L for the whole chain...");
+  const todayDate = new Date();
+  for (const member of CHAIN) {
+    const userId = createdIds[member.label];
+    let runningBalance = plan.min_deposit; // starting point matches their real first-deposit snapshot
+
+    for (let daysAgo = 10; daysAgo >= 1; daysAgo--) {
+      const entryDate = new Date(todayDate);
+      entryDate.setDate(entryDate.getDate() - daysAgo);
+      const snapshotDate = entryDate.toISOString().slice(0, 10);
+
+      // Random daily return between -2% and +4% -- deliberately skewed
+      // slightly positive so most test accounts show believable growth
+      // over the 10-day window, while still including some down days.
+      const pct = Math.random() * 6 - 2;
+      const newBalance = runningBalance * (1 + pct / 100);
+      const pnl = newBalance - runningBalance;
+      runningBalance = newBalance;
+
+      const { error } = await supabase.from("portfolio_snapshots").insert({
+        user_id: userId,
+        snapshot_date: snapshotDate,
+        balance: Math.round(newBalance * 100) / 100,
+        return_percent: Math.round(pct * 100) / 100,
+        pnl_total: Math.round(pnl * 100) / 100,
+        pnl_today: Math.round(pnl * 100) / 100,
+        pnl_this_month: Math.round(pnl * 100) / 100,
+        source: "reconciliation",
+        is_settlement: false, // routine daily entries -- deliberately does NOT trigger profit-share commissions
+      });
+      if (error) throw error;
+    }
+    console.log(`✔ ${member.label}: 10 days of backdated P&L seeded (ending balance $${runningBalance.toFixed(2)})`);
+  }
+
   console.log("\nLogin credentials for every account: password is", PASSWORD);
   console.log("Emails:", CHAIN.map((c) => c.email).join(", "));
+  console.log("\nCheck any account's Portfolio page -- it should now show a real 10-day history,");
+  console.log("all correctly backdated (not bunched up as if they all happened today).");
 }
 
 main().catch((err) => {
