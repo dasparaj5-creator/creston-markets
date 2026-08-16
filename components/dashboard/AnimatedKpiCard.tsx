@@ -1,20 +1,28 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
  * Genuine visual upgrade over the plain KpiCard, not just a recolor:
  * staggered entrance animation (via the `index` prop, used to offset
  * each card's delay so they animate in sequence rather than all at
- * once), and a subtle gold glow behind the number itself -- treating
- * the gold accent as a real signature element rather than flat text,
- * matching the same design language already established in the
- * marketing decks earlier in this project.
+ * once), and a subtle gold glow behind the number itself.
+ *
+ * IMPORTANT: takes `icon` as an already-rendered JSX element (React.ReactNode),
+ * NOT a component reference (LucideIcon). This component has "use client"
+ * (needed for framer-motion), and its parent (the dashboard page) is a
+ * Server Component -- passing a raw component reference like `icon={Wallet}`
+ * across that server/client boundary is not allowed in React Server
+ * Components (functions can't be serialized across that boundary), and
+ * caused a real production crash on every single dashboard page load
+ * ("Functions cannot be passed directly to Client Components"). The fix is
+ * for the Server Component parent to render the icon itself into JSX
+ * (e.g. `icon={<Wallet className="h-4 w-4" />}`) and pass that finished
+ * element down instead of the bare component.
  */
 export default function AnimatedKpiCard({
-  icon: Icon,
+  icon,
   label,
   value,
   trend,
@@ -22,7 +30,7 @@ export default function AnimatedKpiCard({
   index = 0,
   accent = false,
 }: {
-  icon: LucideIcon;
+  icon: React.ReactNode;
   label: string;
   value: string;
   trend?: string;
@@ -57,7 +65,7 @@ export default function AnimatedKpiCard({
             accent ? "bg-gold/20 text-gold" : "bg-gold/10 text-gold"
           )}
         >
-          <Icon className="h-4 w-4" />
+          {icon}
         </span>
         {trend && (
           <span className={cn("text-xs font-medium", trendPositive ? "text-success" : "text-danger")}>

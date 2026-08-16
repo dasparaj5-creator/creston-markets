@@ -76,16 +76,16 @@ export default async function DashboardHomePage() {
       <WelcomeHero fullName={profile.full_name} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <AnimatedKpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(portfolioValue)} index={0} accent />
+        <AnimatedKpiCard icon={<Wallet className="h-4 w-4" />} label="Portfolio Value" value={formatCurrency(portfolioValue)} index={0} accent />
         <AnimatedKpiCard
-          icon={TrendingUp}
+          icon={<TrendingUp className="h-4 w-4" />}
           label="Total Return"
           value={`${totalReturn.toFixed(2)}%`}
           trend={latestSnapshot ? undefined : "No statement yet"}
           index={1}
         />
-        <AnimatedKpiCard icon={Layers} label="Plan Status" value={plan?.name ?? "No Plan Selected"} index={2} />
-        <AnimatedKpiCard icon={Gift} label="Referral Bonus Earned" value={formatCurrency(bonusEarned)} index={3} />
+        <AnimatedKpiCard icon={<Layers className="h-4 w-4" />} label="Plan Status" value={plan?.name ?? "No Plan Selected"} index={2} />
+        <AnimatedKpiCard icon={<Gift className="h-4 w-4" />} label="Referral Bonus Earned" value={formatCurrency(bonusEarned)} index={3} />
       </div>
 
       <PerformanceChart snapshots={snapshots ?? []} />
