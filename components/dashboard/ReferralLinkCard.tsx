@@ -43,9 +43,9 @@ export default function ReferralLinkCard({ referralCode }: { referralCode: strin
           <QRCodeSVG value={link} size={112} />
         </div>
 
-        <div className="flex-1 space-y-3">
+        <div className="min-w-0 flex-1 space-y-3">
           <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
-            <span className="flex-1 truncate text-sm text-text-primary/90">{link}</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-text-primary/90">{link}</span>
           </div>
           <div className="flex gap-2">
             <button onClick={handleCopy} className="btn-secondary flex-1 !py-2 text-sm">

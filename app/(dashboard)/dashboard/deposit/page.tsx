@@ -1,7 +1,7 @@
 import { Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDateTime, slugifyStatus } from "@/lib/utils";
 import RiskBanner from "@/components/shared/RiskBanner";
 import CryptoDepositForm from "@/components/dashboard/CryptoDepositForm";
 import PlanUpgradeForm from "@/components/dashboard/PlanUpgradeForm";
@@ -66,7 +66,7 @@ export default async function DepositPage() {
                           d.status === "approved" ? "badge-success" : d.status === "rejected" ? "badge-danger" : "badge-warning"
                         }
                       >
-                        {d.status}
+                        {slugifyStatus(d.status)}
                       </span>
                     </td>
                   </tr>

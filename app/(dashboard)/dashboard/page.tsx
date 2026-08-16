@@ -1,7 +1,7 @@
 import { Wallet, TrendingUp, Layers, Gift } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, slugifyStatus } from "@/lib/utils";
 import KpiCard from "@/components/dashboard/KpiCard";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
 import AnnouncementBanner from "@/components/dashboard/AnnouncementBanner";
@@ -98,7 +98,7 @@ export default async function DashboardHomePage() {
                       tx.status === "approved" ? "badge-success" : tx.status === "rejected" ? "badge-danger" : "badge-warning"
                     }
                   >
-                    {tx.status}
+                    {slugifyStatus(tx.status)}
                   </span>
                 </div>
               ))}

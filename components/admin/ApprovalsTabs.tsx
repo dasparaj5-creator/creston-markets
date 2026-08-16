@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Copy, ImageIcon } from "lucide-react";
-import { formatCurrency, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDateTime, slugifyStatus } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import ApprovalActions from "@/components/admin/ApprovalActions";
 
@@ -136,7 +136,7 @@ export default function ApprovalsTabs({
                         d.status === "approved" ? "badge-success" : d.status === "rejected" ? "badge-danger" : "badge-warning"
                       }
                     >
-                      {d.status}
+                      {slugifyStatus(d.status)}
                     </span>
                   </td>
                   <td className="py-3">
@@ -178,7 +178,7 @@ export default function ApprovalsTabs({
                         w.status === "approved" ? "badge-success" : w.status === "rejected" ? "badge-danger" : "badge-warning"
                       }
                     >
-                      {w.status}
+                      {slugifyStatus(w.status)}
                     </span>
                   </td>
                   <td className="py-3">

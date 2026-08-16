@@ -1,7 +1,7 @@
 import { Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, slugifyStatus } from "@/lib/utils";
 import RiskBanner from "@/components/shared/RiskBanner";
 import WithdrawForm from "@/components/dashboard/WithdrawForm";
 
@@ -71,7 +71,7 @@ export default async function WithdrawPage() {
                           w.status === "approved" ? "badge-success" : w.status === "rejected" ? "badge-danger" : "badge-warning"
                         }
                       >
-                        {w.status}
+                        {slugifyStatus(w.status)}
                       </span>
                     </td>
                   </tr>

@@ -26,8 +26,8 @@ export default function RiskDisclaimerPage() {
         incorrect account or wallet information supplied by the client.
       </p>
       <p>
-        Account balances and performance figures are currently reviewed and recorded manually by
-        our team, with automated live syncing planned for the future.
+        Account balances and performance figures are reviewed and recorded by our team as part of
+        our standard reconciliation process.
       </p>
     </LegalPage>
   );

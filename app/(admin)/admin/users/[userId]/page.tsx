@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Mail, Phone, Globe, Calendar, ShieldCheck, Database } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateTime, slugifyStatus } from "@/lib/utils";
 import KycActions from "@/components/admin/KycActions";
 import KycDocumentViewer from "@/components/admin/KycDocumentViewer";
 import UserReferralTree from "@/components/admin/UserReferralTree";
@@ -217,7 +217,7 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
                 <span className="text-text-primary/90">{formatCurrency(d.amount)}</span>
                 <span className="text-xs text-text-muted">{formatDate(d.created_at)}</span>
                 <span className={d.status === "approved" ? "badge-success" : d.status === "rejected" ? "badge-danger" : "badge-warning"}>
-                  {d.status}
+                  {slugifyStatus(d.status)}
                 </span>
               </div>
             ))}
@@ -233,7 +233,7 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
                 <span className="text-text-primary/90">{formatCurrency(w.amount)}</span>
                 <span className="text-xs text-text-muted">{formatDate(w.created_at)}</span>
                 <span className={w.status === "approved" ? "badge-success" : w.status === "rejected" ? "badge-danger" : "badge-warning"}>
-                  {w.status}
+                  {slugifyStatus(w.status)}
                 </span>
               </div>
             ))}

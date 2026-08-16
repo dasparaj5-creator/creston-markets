@@ -20,6 +20,21 @@
   }
 }
 
+@layer utilities {
+  /* Genuine, targeted fix for a real recurring bug: Tailwind's
+     `truncate` class only works correctly on a flex child if that
+     child also has min-width: 0 -- flex items default to min-width:
+     auto, which silently overrides truncate/overflow-hidden and lets
+     long unbroken text (wallet addresses, referral links) push past
+     its container instead of actually truncating. Found this exact
+     bug twice (deposit address, referral link) on mobile. Rather than
+     rely on remembering to add min-w-0 by hand every time truncate is
+     used inside a flex row, this makes it automatic going forward. */
+  .truncate {
+    min-width: 0;
+  }
+}
+
 /* Colors as R G B channel triples (no commas) so Tailwind's
    rgb(var(--x) / <alpha-value>) opacity modifiers work, e.g. bg-navy/80. */
 :root,
