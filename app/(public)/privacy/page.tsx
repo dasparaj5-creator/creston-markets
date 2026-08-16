@@ -23,17 +23,17 @@ export default function PrivacyPage() {
 
       <h3>How We Store Your Data</h3>
       <p>
-        Our platform is built on Supabase, a hosted database and backend infrastructure provider.
-        Your account information is stored in a Supabase-managed Postgres database, protected by
-        row-level security policies that restrict access so that, in the ordinary course of using
-        the platform, you can only access your own data (and platform administrators can access
-        what is necessary to operate and support the service).
+        Your account information is stored in a secured, access-controlled database, protected by
+        strict data-isolation policies that restrict access so that, in the ordinary course of
+        using the platform, you can only access your own data (and platform administrators can
+        access what is necessary to operate and support the service).
       </p>
       <p>
-        KYC identity documents you submit are stored in a private Supabase Storage bucket that is
-        not publicly accessible. Access to these documents is granted only through short-lived,
-        signed URLs generated on demand for authorized viewing (such as our compliance team
-        reviewing your submission), and these links expire automatically after a short period.
+        KYC identity documents you submit are stored in a private, access-restricted storage
+        system that is not publicly accessible. Access to these documents is granted only through
+        short-lived, secure links generated on demand for authorized viewing (such as our
+        compliance team reviewing your submission), and these links expire automatically after a
+        short period.
       </p>
 
       <h3>How We Use Your Information</h3>

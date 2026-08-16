@@ -27,9 +27,16 @@
      auto, which silently overrides truncate/overflow-hidden and lets
      long unbroken text (wallet addresses, referral links) push past
      its container instead of actually truncating. Found this exact
-     bug twice (deposit address, referral link) on mobile. Rather than
-     rely on remembering to add min-w-0 by hand every time truncate is
-     used inside a flex row, this makes it automatic going forward. */
+     bug on the deposit address and referral link boxes on mobile --
+     the direct element with `truncate` needed this AND its immediate
+     flex parent one level up needed it too, in both real cases found
+     so far. Deliberately scoped to just `.truncate` itself rather than
+     a blanket `.flex-1 { min-width: 0 }` site-wide rule -- with launch
+     tomorrow, a narrowly-targeted fix confirmed against the two real
+     cases found is safer than a broad change to 20+ files' worth of
+     flex-1 usage that hasn't all been individually re-checked. Every
+     specific truncate+flex-parent combination found has its min-w-0
+     added explicitly at both levels directly in its own component. */
   .truncate {
     min-width: 0;
   }

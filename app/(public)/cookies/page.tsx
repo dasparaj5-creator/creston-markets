@@ -17,7 +17,7 @@ export default function CookiesPage() {
       <h3>How We Use Cookies</h3>
       <p>We use cookies and browser storage for the following essential purposes only:</p>
       <ul>
-        <li><strong>Authentication</strong>: to keep you securely logged in to your account, managed through Supabase Auth.</li>
+        <li><strong>Authentication</strong>: to keep you securely logged in to your account.</li>
         <li><strong>Preferences</strong>: to remember settings such as your preferred theme (light or dark) and whether you've dismissed certain informational banners.</li>
         <li><strong>Security</strong>: to help protect the platform and your account against unauthorized access.</li>
       </ul>

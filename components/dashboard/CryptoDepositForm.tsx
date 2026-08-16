@@ -157,9 +157,9 @@ export default function CryptoDepositForm({
           <div className="rounded-xl bg-white p-3">
             <QRCodeSVG value={activeAddress.wallet_address} size={112} />
           </div>
-          <div className="flex-1 space-y-2 text-center sm:text-left">
+          <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
             <p className="text-xs text-text-muted">Send USDT ({selectedNetwork}) to:</p>
-            <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
+            <div className="flex min-w-0 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
               <span className="min-w-0 flex-1 truncate text-sm text-text-primary/90">{activeAddress.wallet_address}</span>
               <button type="button" onClick={handleCopy} className="shrink-0 text-text-muted hover:text-gold">
                 {copied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}

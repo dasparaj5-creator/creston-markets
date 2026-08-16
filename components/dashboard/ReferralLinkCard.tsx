@@ -44,7 +44,7 @@ export default function ReferralLinkCard({ referralCode }: { referralCode: strin
         </div>
 
         <div className="min-w-0 flex-1 space-y-3">
-          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
+          <div className="flex min-w-0 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
             <span className="min-w-0 flex-1 truncate text-sm text-text-primary/90">{link}</span>
           </div>
           <div className="flex gap-2">
