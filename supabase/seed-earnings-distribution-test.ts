@@ -111,14 +111,31 @@ async function createAndLinkMember(
   console.log(`✔ Created ${member.label}${referrerId ? "" : " (root, no referrer)"}`);
 }
 
+/**
+ * Fetches the referred_by value for a single user. Pulled out as a
+ * fully standalone, explicitly-typed function (not inlined in the loop
+ * below) -- the same TypeScript "implicitly has type any because it is
+ * referenced in its own initializer" error hit earlier in this project
+ * (ReferralLinkForm.tsx) with the identical pattern: a query result
+ * destructured inline inside a loop where that same result feeds back
+ * into the loop's own condition variable. An isolated function with an
+ * explicit return type has no shared scope for that inference problem
+ * to occur in at all.
+ */
+async function fetchReferredBy(targetUserId: string): Promise<string | null> {
+  const result = await supabase.from("users").select("referred_by").eq("id", targetUserId).maybeSingle();
+  if (!result.data) return null;
+  return result.data.referred_by;
+}
+
 /** Walks UP the referred_by chain from a given member, up to 5 hops -- mirrors the real trigger's own logic exactly, for computing expected values. */
 async function getUpline(userId: string, createdIds: Record<string, string>): Promise<string[]> {
   const idToLabel = Object.fromEntries(Object.entries(createdIds).map(([label, id]) => [id, label]));
   const upline: string[] = [];
   let walker: string | null = userId;
   for (let hop = 0; hop < 5; hop++) {
-    const { data } = await supabase.from("users").select("referred_by").eq("id", walker).single();
-    walker = data?.referred_by ?? null;
+    const nextReferredBy = await fetchReferredBy(walker);
+    walker = nextReferredBy;
     if (!walker) break;
     upline.push(idToLabel[walker] ?? walker);
   }
