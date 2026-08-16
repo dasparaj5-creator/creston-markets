@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   UsersRound,
+  Send,
   Database,
   Gift,
   CheckSquare,
@@ -14,6 +15,7 @@ import {
   BarChart3,
   Settings,
   LifeBuoy,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/shared/Logo";
@@ -22,6 +24,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/groups", label: "Client Groups", icon: UsersRound },
+  { href: "/admin/bulk-earnings", label: "Bulk Earnings Update", icon: Send },
   { href: "/admin/reconciliation", label: "Reconciliation", icon: Database },
   { href: "/admin/referrals", label: "Referral Bonuses", icon: Gift },
   { href: "/admin/approvals", label: "Approvals", icon: CheckSquare },
@@ -31,6 +34,7 @@ const navItems = [
   { href: "/admin/support", label: "Support Tickets", icon: LifeBuoy },
   { href: "/admin/reports", label: "Reports", icon: BarChart3 },
   { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin/activity-log", label: "Activity Log", icon: History },
 ];
 
 export default function AdminSidebar() {

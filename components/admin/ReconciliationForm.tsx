@@ -12,6 +12,7 @@ import { logger } from "@/lib/logger";
 
 const schema = z.object({
   userId: z.string().min(1, "Select a user"),
+  snapshotDate: z.string().min(1, "Select the date this entry applies to"),
   balance: z.coerce.number(),
   pnlTotal: z.coerce.number(),
   pnlToday: z.coerce.number(),
@@ -21,6 +22,8 @@ const schema = z.object({
   settlementPeriod: z.string().optional(),
 });
 type FormValues = z.infer<typeof schema>;
+
+const today = () => new Date().toISOString().slice(0, 10);
 
 export default function ReconciliationForm({
   users,
@@ -37,9 +40,14 @@ export default function ReconciliationForm({
     watch,
     reset,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { isSettlement: false } });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { isSettlement: false, snapshotDate: today() },
+  });
 
   const isSettlement = watch("isSettlement");
+  const snapshotDate = watch("snapshotDate");
+  const isBackdated = snapshotDate && snapshotDate !== today();
 
   const onSubmit = async (values: FormValues) => {
     if (values.isSettlement && !values.settlementPeriod?.trim()) {
@@ -52,6 +60,7 @@ export default function ReconciliationForm({
       const supabase = createClient();
       const { error } = await supabase.from("portfolio_snapshots").insert({
         user_id: values.userId,
+        snapshot_date: values.snapshotDate,
         balance: values.balance,
         pnl_total: values.pnlTotal,
         pnl_today: values.pnlToday,
@@ -68,6 +77,8 @@ export default function ReconciliationForm({
         userId: values.userId,
         adminId,
         isSettlement: values.isSettlement,
+        snapshotDate: values.snapshotDate,
+        backdated: values.snapshotDate !== today(),
       });
 
       if (values.isSettlement) {
@@ -101,6 +112,22 @@ export default function ReconciliationForm({
           ))}
         </select>
         {errors.userId && <p className="mt-1 text-xs text-danger">{errors.userId.message}</p>}
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-xs font-medium text-text-muted">
+          Date This Entry Applies To
+        </label>
+        <input {...register("snapshotDate")} type="date" max={today()} className="input-field" />
+        {errors.snapshotDate && <p className="mt-1 text-xs text-danger">{errors.snapshotDate.message}</p>}
+        {isBackdated && (
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gold">
+            <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+            This is a backdated entry for a past date, not today. It will be treated as the
+            correct record for {snapshotDate}, and any later entries stay newer than it, exactly
+            as if it had been entered on that date originally.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

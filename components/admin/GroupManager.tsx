@@ -310,9 +310,10 @@ function BulkReconciliationForm({
           .from("portfolio_snapshots")
           .select("balance")
           .eq("user_id", member.id)
+          .order("snapshot_date", { ascending: false })
           .order("created_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         const previousBalance = latestSnapshot?.balance ?? 0;
         const pct = parseFloat(returnPercent);
