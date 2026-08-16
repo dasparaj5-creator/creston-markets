@@ -40,6 +40,26 @@ export default function ApprovalActions({
 
       logger.info(`${table} ${status}`, { id, adminId });
       toast.success(`${table === "deposits" ? "Deposit" : "Withdrawal"} ${status}.`);
+
+      // Send the deposit confirmation email -- deliberately fire-and-forget
+      // (not awaited into the main try block) so a slow or failed email
+      // send can never delay or block the actual approval action from
+      // completing for the admin. Only fires for deposits being approved,
+      // never rejections, never withdrawals (no email template exists for
+      // those yet).
+      if (table === "deposits" && status === "approved") {
+        fetch("/api/send-deposit-confirmation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ depositId: id }),
+        }).catch((err) => {
+          // A failed confirmation email should never surface as an error
+          // to the admin about the approval itself -- the approval already
+          // succeeded. Logged quietly instead.
+          logger.error("Deposit confirmation email failed to send", { err, depositId: id });
+        });
+      }
+
       router.refresh();
     } catch (err) {
       logger.error(`${table} action failed`, { err });
