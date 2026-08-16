@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Real fix for text overflowing its container on narrow mobile
+     viewports -- previously there was no safeguard at all here, so
+     long unbroken strings (long email addresses, large numbers,
+     wallet addresses, etc.) could push past their card/box edges
+     rather than wrapping. This applies globally, safely: normal short
+     words still wrap at natural spaces first (word-break: normal is
+     the default), this only kicks in as a fallback for a single
+     unbroken string that's wider than its container, which is
+     precisely the failure mode being reported.
+     overflow-wrap: break-word is the modern standard property (word-wrap
+     is kept too for older browser engine compatibility). */
+  * {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+}
+
 /* Colors as R G B channel triples (no commas) so Tailwind's
    rgb(var(--x) / <alpha-value>) opacity modifiers work, e.g. bg-navy/80. */
 :root,

@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <DashboardSidebar />
       <div className="lg:pl-64">
         <DashboardTopbar profile={profile} />
-        <main className="px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-8">
+        <main className="px-4 pb-20 pt-6 sm:px-6 lg:px-8 lg:pb-8">
           <div className="mx-auto max-w-6xl space-y-6">
             <ErrorBoundary>{children}</ErrorBoundary>
           </div>

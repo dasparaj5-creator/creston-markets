@@ -2,13 +2,17 @@ import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import AdminSettingsForm from "@/components/admin/AdminSettingsForm";
 import AdminPasswordForm from "@/components/admin/AdminPasswordForm";
+import WhatsAppSettingForm from "@/components/admin/WhatsAppSettingForm";
 import CryptoAddressManager from "@/components/admin/CryptoAddressManager";
 
 export default async function AdminSettingsPage() {
   const admin = await requireAdmin();
   const supabase = createClient();
 
-  const { data: addresses } = await supabase.from("crypto_deposit_addresses").select("*");
+  const [{ data: addresses }, { data: whatsappSetting }] = await Promise.all([
+    supabase.from("crypto_deposit_addresses").select("*"),
+    supabase.from("platform_settings").select("value").eq("key", "whatsapp_number").maybeSingle(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -19,6 +23,7 @@ export default async function AdminSettingsPage() {
         </p>
       </div>
       <AdminPasswordForm />
+      <WhatsAppSettingForm currentNumber={whatsappSetting?.value ?? ""} adminId={admin.id} />
       <CryptoAddressManager addresses={addresses ?? []} adminId={admin.id} />
       <AdminSettingsForm />
     </div>

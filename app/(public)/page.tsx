@@ -9,8 +9,16 @@ import ReferralExplainer from "@/components/landing/ReferralExplainer";
 import Testimonials from "@/components/landing/Testimonials";
 import FaqAccordion from "@/components/landing/FaqAccordion";
 import ContactForm from "@/components/landing/ContactForm";
+import { createClient } from "@/lib/supabase/server";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = createClient();
+  const { data: whatsappSetting } = await supabase
+    .from("platform_settings")
+    .select("value")
+    .eq("key", "whatsapp_number")
+    .maybeSingle();
+
   return (
     <>
       <Hero />
@@ -23,7 +31,7 @@ export default function LandingPage() {
       <ReferralExplainer />
       <Testimonials />
       <FaqAccordion />
-      <ContactForm />
+      <ContactForm whatsappNumber={whatsappSetting?.value ?? ""} />
     </>
   );
 }

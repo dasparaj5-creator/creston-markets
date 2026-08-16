@@ -2,31 +2,25 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 /**
- * Creston Markets — Full referral chain test seeder
+ * Creston Markets — Multi-branch referral stress test seeder
  *
- * Creates a complete A -> B -> C -> D -> E -> F -> G chain (7 accounts),
- * each with a real, working login (email confirmed automatically via the
- * service role, matching the pattern in seed.ts), correctly linked via
- * referred_by, each submitting and having approved a first deposit --
- * covering every depth from 1 through 5 layers, PLUS the roll-off case
- * (G's deposit, where A should earn nothing since A is 6 steps away).
+ * Builds TWO branches off the same root account, to test how the
+ * commission engine handles a person (A) being upline of two entirely
+ * separate downline paths at once:
  *
- * This exists specifically to avoid the slow, repetitive process of
- * registering 7 accounts one at a time through the actual website UI,
- * each needing a real login to fetch their own referral link before the
- * next person can register -- this script does the equivalent
- * end-state directly, in seconds, via the same admin API the existing
- * seed.ts script already uses.
+ *   Main trunk:  A -> B -> C -> D -> E -> F -> G -> H   (8 people)
+ *   Second branch, off A directly:  A -> R -> S -> T     (4 people)
  *
- * WHAT THIS DOES NOT TEST: the actual registration page's referral-code
- * capture logic itself (the bug just fixed in migration_011.sql) --
- * this script sets `referred_by` directly, bypassing that code path
- * entirely. This is intentional: the two things being tested are
- * different. Use this script to verify the COMMISSION ENGINE math is
- * correct across all 5 depths; separately, do at least one real
- * UI-based registration test (a fresh 2-person chain through the actual
- * /register?ref=... flow) to confirm the bug fix itself works. Both
- * matter; this script only covers the former.
+ * This directly tests: does A correctly receive commissions from BOTH
+ * branches independently and correctly (A is "nearest" to both B and R,
+ * since each branch counts UPWARD from its own newest joiner -- this is
+ * exactly the kind of multi-branch case worth confirming explicitly,
+ * since the whole position-counting design is per-chain, not per-root).
+ *
+ * Every account gets a real, working login, is correctly linked via
+ * referred_by, submits and has approved a first deposit (triggering
+ * joining bonus commissions), AND gets 10 days of backdated, randomized
+ * daily P&L seeded automatically.
  *
  * Run with: npx tsx supabase/seed-referral-chain.ts
  * Requires SUPABASE_SERVICE_ROLE_KEY in .env.local (same as seed.ts).
@@ -48,16 +42,28 @@ const supabase = createClient(url, serviceKey, {
 const TIMESTAMP = Date.now();
 const PASSWORD = "TestChainPass123!";
 
-const CHAIN = ["A", "B", "C", "D", "E", "F", "G"].map((letter) => ({
-  label: `Test Chain ${letter}`,
-  email: `seedtest-${letter.toLowerCase()}-${TIMESTAMP}@example.com`,
-}));
+interface ChainMember {
+  label: string;
+  email: string;
+}
+
+function buildChainDefinition(letters: string[]): ChainMember[] {
+  return letters.map((letter) => ({
+    label: `Test Chain ${letter}`,
+    email: `seedtest-${letter.toLowerCase()}-${TIMESTAMP}@example.com`,
+  }));
+}
+
+// The main trunk (8 people, deep enough to show 5-layer + roll-off
+// twice over) and the second branch, sharing A as their common root.
+const MAIN_TRUNK = buildChainDefinition(["A", "B", "C", "D", "E", "F", "G", "H"]);
+const SECOND_BRANCH = buildChainDefinition(["R", "S", "T"]); // A -> R is implied, A already exists in MAIN_TRUNK
 
 async function createAuthUser(email: string, password: string): Promise<string> {
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // bypasses email confirmation entirely -- account is immediately usable
+    email_confirm: true,
   });
   if (error) {
     if (error.message.toLowerCase().includes("already")) {
@@ -70,11 +76,80 @@ async function createAuthUser(email: string, password: string): Promise<string> 
   return data.user!.id;
 }
 
-async function main() {
-  console.log("Seeding full A-G referral test chain...\n");
+async function createAndLinkMember(
+  member: ChainMember,
+  referrerId: string | null,
+  createdIds: Record<string, string>
+): Promise<void> {
+  const id = await createAuthUser(member.email, PASSWORD);
+  const { error } = await supabase.from("users").upsert({
+    id,
+    email: member.email,
+    full_name: member.label,
+    role: "client",
+    kyc_status: "approved",
+    is_active: true,
+  });
+  if (error) throw error;
+  createdIds[member.label] = id;
 
-  // Grab an active plan to use for every deposit -- reuses whatever
-  // real plans already exist rather than assuming a specific one.
+  if (referrerId) {
+    const { error: linkError } = await supabase.from("users").update({ referred_by: referrerId }).eq("id", id);
+    if (linkError) throw linkError;
+  }
+  console.log(`✔ Created ${member.label}${referrerId ? " (linked to referrer)" : " (root, no referrer)"}`);
+}
+
+async function submitAndApproveDeposit(userId: string, label: string, planId: string, amount: number): Promise<void> {
+  const { data: deposit, error: depositError } = await supabase
+    .from("deposits")
+    .insert({ user_id: userId, plan_id: planId, amount, status: "pending" })
+    .select()
+    .single();
+  if (depositError) throw depositError;
+
+  const { error: approveError } = await supabase
+    .from("deposits")
+    .update({ status: "approved", approved_at: new Date().toISOString() })
+    .eq("id", deposit.id);
+  if (approveError) throw approveError;
+
+  console.log(`✔ ${label}'s deposit ($${amount}) submitted and approved`);
+}
+
+async function seedBackdatedHistory(userId: string, label: string, startingBalance: number): Promise<void> {
+  let runningBalance = startingBalance;
+  const todayDate = new Date();
+
+  for (let daysAgo = 10; daysAgo >= 1; daysAgo--) {
+    const entryDate = new Date(todayDate);
+    entryDate.setDate(entryDate.getDate() - daysAgo);
+    const snapshotDate = entryDate.toISOString().slice(0, 10);
+
+    const pct = Math.random() * 6 - 2; // -2% to +4%, slightly skewed positive
+    const newBalance = runningBalance * (1 + pct / 100);
+    const pnl = newBalance - runningBalance;
+    runningBalance = newBalance;
+
+    const { error } = await supabase.from("portfolio_snapshots").insert({
+      user_id: userId,
+      snapshot_date: snapshotDate,
+      balance: Math.round(newBalance * 100) / 100,
+      return_percent: Math.round(pct * 100) / 100,
+      pnl_total: Math.round(pnl * 100) / 100,
+      pnl_today: Math.round(pnl * 100) / 100,
+      pnl_this_month: Math.round(pnl * 100) / 100,
+      source: "reconciliation",
+      is_settlement: false,
+    });
+    if (error) throw error;
+  }
+  console.log(`✔ ${label}: 10 days of backdated P&L seeded (ending balance $${runningBalance.toFixed(2)})`);
+}
+
+async function main() {
+  console.log("Seeding multi-branch referral stress test...\n");
+
   const { data: plans } = await supabase.from("plans").select("id, name, min_deposit").eq("is_active", true).order("min_deposit");
   const plan = plans?.[0];
   if (!plan) {
@@ -85,126 +160,62 @@ async function main() {
 
   const createdIds: Record<string, string> = {};
 
-  // Step 1: create all 7 accounts, unlinked for now.
-  for (const member of CHAIN) {
-    const id = await createAuthUser(member.email, PASSWORD);
-    const { error } = await supabase.from("users").upsert({
-      id,
-      email: member.email,
-      full_name: member.label,
-      role: "client",
-      kyc_status: "approved",
-      is_active: true,
-    });
-    if (error) throw error;
-    createdIds[member.label] = id;
-    console.log(`✔ Created ${member.label} (${member.email})`);
+  // --- Main trunk: A -> B -> C -> D -> E -> F -> G -> H ---
+  console.log("Building main trunk (A through H)...");
+  await createAndLinkMember(MAIN_TRUNK[0], null, createdIds); // A, root
+  for (let i = 1; i < MAIN_TRUNK.length; i++) {
+    await createAndLinkMember(MAIN_TRUNK[i], createdIds[MAIN_TRUNK[i - 1].label], createdIds);
   }
 
-  // Step 2: link the chain, A -> B -> C -> D -> E -> F -> G.
-  console.log("\nLinking referral chain...");
-  for (let i = 1; i < CHAIN.length; i++) {
-    const current = CHAIN[i].label;
-    const referrer = CHAIN[i - 1].label;
-    const { error } = await supabase
-      .from("users")
-      .update({ referred_by: createdIds[referrer] })
-      .eq("id", createdIds[current]);
-    if (error) throw error;
-    console.log(`✔ ${current} referred by ${referrer}`);
+  // --- Second branch, off A directly: A -> R -> S -> T ---
+  console.log("\nBuilding second branch off A (R -> S -> T)...");
+  await createAndLinkMember(SECOND_BRANCH[0], createdIds["Test Chain A"], createdIds); // R, referred by A
+  for (let i = 1; i < SECOND_BRANCH.length; i++) {
+    await createAndLinkMember(SECOND_BRANCH[i], createdIds[SECOND_BRANCH[i - 1].label], createdIds);
   }
 
-  // Step 3: submit and immediately approve a first deposit for B through
-  // G (A has no upline, so A's own deposit triggers nothing -- skipped
-  // deliberately to match the real test plan's expectations).
+  // --- Deposits: everyone except the two roots' own signup (A has no
+  // upline; R's deposit DOES trigger commissions for A, so R is
+  // included here, only A itself is skipped) ---
   console.log("\nSubmitting and approving deposits, in chain order (this is what triggers commissions)...");
-  for (let i = 1; i < CHAIN.length; i++) {
-    const member = CHAIN[i];
-    const userId = createdIds[member.label];
-
-    const { data: deposit, error: depositError } = await supabase
-      .from("deposits")
-      .insert({
-        user_id: userId,
-        plan_id: plan.id,
-        amount: plan.min_deposit,
-        status: "pending",
-      })
-      .select()
-      .single();
-    if (depositError) throw depositError;
-
-    // Approving via UPDATE (not insert-as-approved) is what actually
-    // fires the handle_deposit_approval() trigger -- it specifically
-    // checks old.status <> 'approved', so this has to be a real status
-    // transition, matching exactly how the real admin Approve button
-    // works.
-    const { error: approveError } = await supabase
-      .from("deposits")
-      .update({ status: "approved", approved_at: new Date().toISOString() })
-      .eq("id", deposit.id);
-    if (approveError) throw approveError;
-
-    console.log(`✔ ${member.label}'s deposit ($${plan.min_deposit}) submitted and approved`);
+  const ALL_NON_ROOT = [...MAIN_TRUNK.slice(1), ...SECOND_BRANCH];
+  for (const member of ALL_NON_ROOT) {
+    await submitAndApproveDeposit(createdIds[member.label], member.label, plan.id, plan.min_deposit);
   }
 
-  console.log("\n✅ Done. Chain summary:");
+  console.log("\n✅ Chain structure:");
   console.log("   A (root, no upline)");
-  for (let i = 1; i < CHAIN.length; i++) {
-    console.log(`   ${"  ".repeat(i)}└─ ${CHAIN[i].label} (referred by ${CHAIN[i - 1].label})`);
+  for (let i = 1; i < MAIN_TRUNK.length; i++) {
+    console.log(`   ${"  ".repeat(i)}└─ ${MAIN_TRUNK[i].label} (main trunk)`);
   }
+  console.log("   └─ R (second branch, also referred by A)");
+  for (let i = 1; i < SECOND_BRANCH.length; i++) {
+    console.log(`   ${"  ".repeat(i + 1)}└─ ${SECOND_BRANCH[i].label} (second branch)`);
+  }
+
   console.log("\nWhat to check now in Admin -> Referral & Earnings:");
-  console.log("  - B's deposit paid A $25 (1-layer)");
-  console.log("  - C's deposit paid B $15 + A $10 (2-layer)");
-  console.log("  - D's deposit paid C $15 + B $6 + A $4 (3-layer)");
-  console.log("  - E's deposit paid D $15 + C $6 + B $3 + A $1 (4-layer)");
-  console.log("  - F's deposit paid E $15 + D $5 + C $3 + B $2 + A $1 (5-layer, full table)");
-  console.log("  - G's deposit paid F/E/D/C/B, but NOT A (roll-off -- A is now 6 steps away)");
+  console.log("MAIN TRUNK (A is upline of all of these, up to 5 positions back):");
+  console.log("  - B's deposit -> A gets $25 (1-layer)");
+  console.log("  - F's deposit -> full 5-layer table (E/D/C/B/A)");
+  console.log("  - G's deposit -> roll-off, A gets NOTHING (A is now 6 steps from G)");
+  console.log("  - H's deposit -> roll-off continues, still no A, B also now excluded");
+  console.log("SECOND BRANCH (independent of the trunk, A is nearest to R):");
+  console.log("  - R's deposit -> A gets $25 (1-layer, SEPARATE event from anything in the trunk)");
+  console.log("  - S's deposit -> A + R split 2-layer table");
+  console.log("  - T's deposit -> A + R + S split 3-layer table");
+  console.log("KEY THING TO CONFIRM: A's total earnings should be the SUM of both branches'");
+  console.log("contributions -- check A's My Earnings page shows entries from BOTH B's/G's/etc");
+  console.log("activity AND R's/S's/T's activity, correctly combined, not one overwriting the other.");
 
-  // Step 4: seed 10 days of backdated, randomized daily P&L for the
-  // whole chain -- directly exercises the backdating fix from
-  // migration_012/013, and gives you a real multi-day performance
-  // history to look at on each test account's Portfolio page without
-  // manually entering 10 days x 7 people by hand in the admin UI.
-  console.log("\nSeeding 10 days of backdated daily P&L for the whole chain...");
-  const todayDate = new Date();
-  for (const member of CHAIN) {
-    const userId = createdIds[member.label];
-    let runningBalance = plan.min_deposit; // starting point matches their real first-deposit snapshot
-
-    for (let daysAgo = 10; daysAgo >= 1; daysAgo--) {
-      const entryDate = new Date(todayDate);
-      entryDate.setDate(entryDate.getDate() - daysAgo);
-      const snapshotDate = entryDate.toISOString().slice(0, 10);
-
-      // Random daily return between -2% and +4% -- deliberately skewed
-      // slightly positive so most test accounts show believable growth
-      // over the 10-day window, while still including some down days.
-      const pct = Math.random() * 6 - 2;
-      const newBalance = runningBalance * (1 + pct / 100);
-      const pnl = newBalance - runningBalance;
-      runningBalance = newBalance;
-
-      const { error } = await supabase.from("portfolio_snapshots").insert({
-        user_id: userId,
-        snapshot_date: snapshotDate,
-        balance: Math.round(newBalance * 100) / 100,
-        return_percent: Math.round(pct * 100) / 100,
-        pnl_total: Math.round(pnl * 100) / 100,
-        pnl_today: Math.round(pnl * 100) / 100,
-        pnl_this_month: Math.round(pnl * 100) / 100,
-        source: "reconciliation",
-        is_settlement: false, // routine daily entries -- deliberately does NOT trigger profit-share commissions
-      });
-      if (error) throw error;
-    }
-    console.log(`✔ ${member.label}: 10 days of backdated P&L seeded (ending balance $${runningBalance.toFixed(2)})`);
+  // --- Backdated 10-day P&L history for every account ---
+  console.log("\nSeeding 10 days of backdated daily P&L for every account...");
+  const ALL_MEMBERS = [...MAIN_TRUNK, ...SECOND_BRANCH];
+  for (const member of ALL_MEMBERS) {
+    await seedBackdatedHistory(createdIds[member.label], member.label, plan.min_deposit);
   }
 
   console.log("\nLogin credentials for every account: password is", PASSWORD);
-  console.log("Emails:", CHAIN.map((c) => c.email).join(", "));
-  console.log("\nCheck any account's Portfolio page -- it should now show a real 10-day history,");
-  console.log("all correctly backdated (not bunched up as if they all happened today).");
+  console.log("Emails:", ALL_MEMBERS.map((m) => m.email).join(", "));
 }
 
 main().catch((err) => {
