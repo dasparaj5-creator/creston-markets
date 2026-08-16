@@ -23,7 +23,7 @@ export default async function DashboardHomePage() {
     { count: directReferralCount },
   ] = await Promise.all([
       profile.plan_id
-        ? supabase.from("plans").select("*").eq("id", profile.plan_id).single()
+        ? supabase.from("plans").select("*").eq("id", profile.plan_id).maybeSingle()
         : Promise.resolve({ data: null }),
       supabase.from("plans").select("*").eq("is_active", true).order("min_deposit"),
       supabase.from("portfolio_snapshots").select("*").eq("user_id", profile.id),
