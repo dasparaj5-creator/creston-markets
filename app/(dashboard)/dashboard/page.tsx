@@ -5,14 +5,13 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import KpiCard from "@/components/dashboard/KpiCard";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
 import AnnouncementBanner from "@/components/dashboard/AnnouncementBanner";
-import { getReferralDisplayStatus } from "@/lib/referral";
 import Link from "next/link";
 
 export default async function DashboardHomePage() {
   const profile = await requireUser();
   const supabase = createClient();
 
-  const [{ data: plan }, { data: snapshots }, { data: recentTx }, { data: referrals }, { data: announcements }] =
+  const [{ data: plan }, { data: snapshots }, { data: recentTx }, { data: commissions }, { data: announcements }, { count: directReferralCount }] =
     await Promise.all([
       profile.plan_id
         ? supabase.from("plans").select("*").eq("id", profile.plan_id).single()
@@ -24,7 +23,13 @@ export default async function DashboardHomePage() {
         .eq("user_id", profile.id)
         .order("created_at", { ascending: false })
         .limit(5),
-      supabase.from("referral_bonuses").select("*").eq("referrer_id", profile.id),
+      // Pulls from commission_records (the real, current 5-layer engine),
+      // not the legacy referral_bonuses table -- this widget previously
+      // showed stale numbers from the old single-tier system, unrelated
+      // to a client's actual current earnings, which is why clicking
+      // through to My Earnings always showed a different, correct
+      // number. Fixed to match.
+      supabase.from("commission_records").select("commission_earned, status").eq("beneficiary_id", profile.id),
       supabase
         .from("announcements")
         .select("*")
@@ -32,6 +37,12 @@ export default async function DashboardHomePage() {
         .or(`target.eq.all,target_user_id.eq.${profile.id}`)
         .order("created_at", { ascending: false })
         .limit(3),
+      // "Referred Users" is a count of actual PEOPLE this client
+      // directly referred, not a count of commission records (which
+      // would overcount, since one downline member's activity can
+      // generate multiple commission records across different chain
+      // depths/positions over time).
+      supabase.from("users").select("id", { count: "exact", head: true }).eq("referred_by", profile.id),
     ]);
 
   const sortedSnapshots = (snapshots ?? [])
@@ -41,9 +52,12 @@ export default async function DashboardHomePage() {
   const portfolioValue = latestSnapshot?.balance ?? 0;
   const totalReturn = latestSnapshot?.return_percent ?? 0;
 
-  const bonusEarned = (referrals ?? [])
-    .filter((r) => getReferralDisplayStatus(r) === "paid")
-    .reduce((sum, r) => sum + Number(r.bonus_amount), 0);
+  const bonusEarned = (commissions ?? [])
+    .filter((c) => c.status === "paid")
+    .reduce((sum, c) => sum + Number(c.commission_earned), 0);
+  const bonusPending = (commissions ?? [])
+    .filter((c) => c.status === "pending")
+    .reduce((sum, c) => sum + Number(c.commission_earned), 0);
 
   return (
     <div className="space-y-6">
@@ -101,7 +115,7 @@ export default async function DashboardHomePage() {
           <h2 className="mb-4 text-sm font-semibold text-text-primary">Referral Quick Stats</h2>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-xl font-bold text-text-primary">{referrals?.length ?? 0}</p>
+              <p className="text-xl font-bold text-text-primary">{directReferralCount ?? 0}</p>
               <p className="mt-1 text-xs text-text-muted">Referred Users</p>
             </div>
             <div>
@@ -109,18 +123,12 @@ export default async function DashboardHomePage() {
               <p className="mt-1 text-xs text-text-muted">Bonus Earned</p>
             </div>
             <div>
-              <p className="text-xl font-bold text-gold">
-                {formatCurrency(
-                  (referrals ?? [])
-                    .filter((r) => getReferralDisplayStatus(r) !== "paid")
-                    .reduce((sum, r) => sum + Number(r.bonus_amount), 0)
-                )}
-              </p>
+              <p className="text-xl font-bold text-gold">{formatCurrency(bonusPending)}</p>
               <p className="mt-1 text-xs text-text-muted">Bonus Pending</p>
             </div>
           </div>
-          <Link href="/dashboard/referral" className="mt-4 block text-center text-xs text-gold hover:underline">
-            View referral program →
+          <Link href="/dashboard/earnings" className="mt-4 block text-center text-xs text-gold hover:underline">
+            View My Earnings →
           </Link>
         </div>
       </div>
