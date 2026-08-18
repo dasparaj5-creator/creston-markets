@@ -11,6 +11,7 @@ import AccountStatusActions from "@/components/admin/AccountStatusActions";
 import UserReconciliationForm from "@/components/admin/UserReconciliationForm";
 import PlanAllocationForm from "@/components/admin/PlanAllocationForm";
 import ReferralLinkForm from "@/components/admin/ReferralLinkForm";
+import CustomBonusForm from "@/components/admin/CustomBonusForm";
 
 const kycBadge: Record<string, string> = {
   approved: "badge-success",
@@ -144,6 +145,11 @@ export default async function AdminUserDetailPage({ params }: { params: { userId
         allUsers={allUsersForReferralPicker ?? []}
         adminId={admin.id}
       />
+
+      {/* Custom bonus -- Scenario C: a genuine, arbitrary bonus amount,
+          for any reason, creating a real commission record rather than a
+          balance adjustment workaround */}
+      <CustomBonusForm userId={user.id} userLabel={user.full_name || user.email} adminId={admin.id} />
 
       {/* Referral relationships */}
       <div className="glass-card p-6">

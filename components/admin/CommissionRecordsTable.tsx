@@ -24,7 +24,7 @@ export default function CommissionRecordsTable({
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [processing, setProcessing] = useState(false);
-  const [typeFilter, setTypeFilter] = useState<"all" | "joining_bonus" | "profit_share">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "joining_bonus" | "profit_share" | "custom_bonus">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("pending");
 
   const filtered = useMemo(() => {
@@ -98,6 +98,7 @@ export default function CommissionRecordsTable({
             <option value="all">All Types</option>
             <option value="joining_bonus">Joining Bonus</option>
             <option value="profit_share">Profit Share</option>
+            <option value="custom_bonus">Custom Bonus</option>
           </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="input-field !w-auto !py-1.5 text-xs">
             <option value="pending">Pending</option>
@@ -149,19 +150,35 @@ export default function CommissionRecordsTable({
                   )}
                 </td>
                 <td className="py-2.5 text-text-primary/90">{r.beneficiary?.full_name || r.beneficiary?.email}</td>
-                <td className="py-2.5 text-text-primary/90">{r.source_user?.full_name || r.source_user?.email}</td>
                 <td className="py-2.5 text-text-primary/90">
-                  {r.position === 1 ? "Nearest" : `${r.position}${["", "st", "nd", "rd"][r.position] ?? "th"}`}
-                  <span className="ml-1 text-text-muted">({r.chain_depth}-layer)</span>
+                  {r.commission_type === "custom_bonus" ? "N/A" : r.source_user?.full_name || r.source_user?.email}
+                </td>
+                <td className="py-2.5 text-text-primary/90">
+                  {r.commission_type === "custom_bonus" ? (
+                    <span className="text-text-muted">N/A</span>
+                  ) : (
+                    <>
+                      {r.position === 1 ? "Nearest" : `${r.position}${["", "st", "nd", "rd"][r.position ?? 0] ?? "th"}`}
+                      <span className="ml-1 text-text-muted">({r.chain_depth}-layer)</span>
+                    </>
+                  )}
                 </td>
                 <td className="py-2.5">
-                  <span className="badge-neutral">{r.commission_type === "joining_bonus" ? "Joining Bonus" : "Profit Share"}</span>
+                  <span className="badge-neutral">
+                    {r.commission_type === "joining_bonus" ? "Joining Bonus" : r.commission_type === "profit_share" ? "Profit Share" : "Custom Bonus"}
+                  </span>
                 </td>
                 <td className="py-2.5 text-text-primary/90">
-                  {r.commission_type === "profit_share" ? `${r.rate_at_time}%` : formatCurrency(r.bonus_amount_at_time ?? 0)}
+                  {r.commission_type === "profit_share"
+                    ? `${r.rate_at_time}%`
+                    : r.commission_type === "custom_bonus"
+                    ? "N/A"
+                    : formatCurrency(r.bonus_amount_at_time ?? 0)}
                 </td>
                 <td className="py-2.5 text-text-primary/90">{formatCurrency(r.commission_earned)}</td>
-                <td className="py-2.5 text-text-primary/90">{r.settlement_period ?? ","}</td>
+                <td className="py-2.5 text-text-primary/90">
+                  {r.commission_type === "custom_bonus" ? (r.custom_reason ?? "N/A") : (r.settlement_period ?? "N/A")}
+                </td>
                 <td className="py-2.5 text-text-primary/90">{formatDate(r.created_at)}</td>
                 <td className="py-2.5">
                   <span className={r.status === "paid" ? "badge-success" : "badge-warning"}>{r.status}</span>

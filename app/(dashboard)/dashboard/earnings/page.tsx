@@ -71,6 +71,9 @@ export default async function EarningsPage() {
   const profitShareTotal = allRecords
     .filter((r) => r.commission_type === "profit_share")
     .reduce((s, r) => s + Number(r.commission_earned), 0);
+  const customBonusTotal = allRecords
+    .filter((r) => r.commission_type === "custom_bonus")
+    .reduce((s, r) => s + Number(r.commission_earned), 0);
 
   // Group actual earnings by position for the summary strip.
   const positionTotals = [1, 2, 3, 4, 5].map((position) => ({
@@ -95,6 +98,7 @@ export default async function EarningsPage() {
         <KpiCard icon={Gift} label="Total Pending" value={formatCurrency(totalPending)} />
         <KpiCard icon={Users} label="Joining Bonuses" value={formatCurrency(joiningBonusTotal)} />
         <KpiCard icon={TrendingUp} label="Profit Share" value={formatCurrency(profitShareTotal)} />
+        {customBonusTotal > 0 && <KpiCard icon={Gift} label="Custom Bonuses" value={formatCurrency(customBonusTotal)} />}
       </div>
 
       <div className="glass-card p-6">

@@ -1,21 +1,28 @@
 "use client";
 
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, slugifyStatus } from "@/lib/utils";
 import { maskName } from "@/lib/utils";
 
 interface EarningRow {
   id: string;
-  chain_depth: number;
-  position: number;
-  commission_type: "joining_bonus" | "profit_share";
+  chain_depth: number | null;
+  position: number | null;
+  commission_type: "joining_bonus" | "profit_share" | "custom_bonus";
   rate_at_time: number | null;
   bonus_amount_at_time: number | null;
   commission_earned: number;
   status: "pending" | "paid";
   settlement_period: string | null;
+  custom_reason: string | null;
   created_at: string;
   source_user?: { full_name: string | null } | null;
 }
+
+const TYPE_LABELS: Record<EarningRow["commission_type"], string> = {
+  joining_bonus: "Joining Bonus",
+  profit_share: "Profit Share",
+  custom_bonus: "Custom Bonus",
+};
 
 export default function EarningsBreakdownTable({ records }: { records: EarningRow[] }) {
   return (
@@ -36,30 +43,43 @@ export default function EarningsBreakdownTable({ records }: { records: EarningRo
             </tr>
           </thead>
           <tbody>
-            {records.map((r) => (
-              <tr key={r.id} className="border-b border-white/5 last:border-0">
-                <td className="py-3 text-text-primary/90">
-                  {r.source_user?.full_name ? maskName(r.source_user.full_name) : ","}
-                </td>
-                <td className="py-3 text-text-primary/90">
-                  Position {r.position} <span className="text-text-muted">({r.chain_depth}-layer chain)</span>
-                </td>
-                <td className="py-3">
-                  <span className="badge-neutral">
-                    {r.commission_type === "joining_bonus" ? "Joining Bonus" : "Profit Share"}
-                  </span>
-                </td>
-                <td className="py-3 text-text-primary/90">
-                  {r.commission_type === "profit_share" ? `${r.rate_at_time}%` : formatCurrency(r.bonus_amount_at_time ?? 0)}
-                </td>
-                <td className="py-3 text-text-primary/90">{formatCurrency(r.commission_earned)}</td>
-                <td className="py-3 text-text-primary/90">{r.settlement_period ?? ","}</td>
-                <td className="py-3 text-text-primary/90">{formatDate(r.created_at)}</td>
-                <td className="py-3">
-                  <span className={r.status === "paid" ? "badge-success" : "badge-warning"}>{r.status}</span>
-                </td>
-              </tr>
-            ))}
+            {records.map((r) => {
+              const isCustom = r.commission_type === "custom_bonus";
+              return (
+                <tr key={r.id} className="border-b border-white/5 last:border-0">
+                  <td className="py-3 text-text-primary/90">
+                    {isCustom ? "N/A" : r.source_user?.full_name ? maskName(r.source_user.full_name) : "N/A"}
+                  </td>
+                  <td className="py-3 text-text-primary/90">
+                    {isCustom ? (
+                      <span className="text-text-muted">N/A</span>
+                    ) : (
+                      <>
+                        Position {r.position} <span className="text-text-muted">({r.chain_depth}-layer chain)</span>
+                      </>
+                    )}
+                  </td>
+                  <td className="py-3">
+                    <span className="badge-neutral">{TYPE_LABELS[r.commission_type]}</span>
+                  </td>
+                  <td className="py-3 text-text-primary/90">
+                    {isCustom
+                      ? "N/A"
+                      : r.commission_type === "profit_share"
+                      ? `${r.rate_at_time}%`
+                      : formatCurrency(r.bonus_amount_at_time ?? 0)}
+                  </td>
+                  <td className="py-3 text-text-primary/90">{formatCurrency(r.commission_earned)}</td>
+                  <td className="py-3 text-text-primary/90">
+                    {isCustom ? (r.custom_reason ?? "N/A") : (r.settlement_period ?? "N/A")}
+                  </td>
+                  <td className="py-3 text-text-primary/90">{formatDate(r.created_at)}</td>
+                  <td className="py-3">
+                    <span className={r.status === "paid" ? "badge-success" : "badge-warning"}>{slugifyStatus(r.status)}</span>
+                  </td>
+                </tr>
+              );
+            })}
             {records.length === 0 && (
               <tr>
                 <td colSpan={8} className="py-8 text-center text-text-muted">

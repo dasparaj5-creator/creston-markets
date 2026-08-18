@@ -54,7 +54,7 @@ export interface KycDocument {
   uploaded_at: string;
 }
 
-export type CommissionType = "joining_bonus" | "profit_share";
+export type CommissionType = "joining_bonus" | "profit_share" | "custom_bonus";
 export type CommissionStatus = "pending" | "paid";
 
 export interface CommissionConfigRow {
@@ -73,9 +73,9 @@ export interface CommissionConfigRow {
 export interface CommissionRecord {
   id: string;
   beneficiary_id: string;
-  source_user_id: string;
-  chain_depth: number;
-  position: number;
+  source_user_id: string | null;
+  chain_depth: number | null;
+  position: number | null;
   commission_type: CommissionType;
   rate_at_time: number | null;
   bonus_amount_at_time: number | null;
@@ -87,6 +87,7 @@ export interface CommissionRecord {
   source_snapshot_id: string | null;
   source_deposit_id: string | null;
   settlement_period: string | null;
+  custom_reason: string | null;
   created_at: string;
 }
 
