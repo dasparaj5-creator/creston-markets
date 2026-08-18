@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Gift, Send, Pencil, Save, X, AlertTriangle } from "lucide-react";
+import { Gift, Send, Pencil, Save, X, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { logger } from "@/lib/logger";
 import { formatCurrency, formatDate, slugifyStatus } from "@/lib/utils";
@@ -172,6 +172,46 @@ export default function CustomBonusForm({
     }
   };
 
+  const [markingPaidId, setMarkingPaidId] = useState<string | null>(null);
+
+  const handleMarkPaid = async (bonus: CustomBonusRecord) => {
+    if (
+      !confirm(
+        `Mark this $${bonus.commission_earned.toFixed(2)} bonus as paid?\n\nThis updates the client's Portfolio Value and Referral & Bonus Earnings totals immediately -- only mark this once the amount has genuinely been credited/confirmed.`
+      )
+    ) {
+      return;
+    }
+
+    setMarkingPaidId(bonus.id);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("commission_records")
+        .update({ status: "paid", paid_at: new Date().toISOString(), paid_by: adminId })
+        .eq("id", bonus.id);
+      if (error) throw error;
+
+      await supabase.from("admin_audit_log").insert({
+        admin_id: adminId,
+        action: "commission.custom_bonus_marked_paid",
+        target_type: "commission_records",
+        target_id: bonus.id,
+        after_value: { status: "paid", amount: bonus.commission_earned },
+      });
+
+      logger.info("Custom bonus marked paid", { bonusId: bonus.id, adminId });
+      toast.success("Marked as paid, now reflected in the client's Portfolio Value.");
+      await loadExistingBonuses();
+      router.refresh();
+    } catch (err) {
+      logger.error("Failed to mark custom bonus as paid", { err });
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setMarkingPaidId(null);
+    }
+  };
+
   return (
     <div className="glass-card space-y-5 p-6">
       <div>
@@ -278,12 +318,24 @@ export default function CustomBonusForm({
                         <p className="mt-0.5 truncate text-xs text-text-muted">{bonus.custom_reason ?? "No reason recorded"}</p>
                         <p className="mt-0.5 text-[11px] text-text-muted">{formatDate(bonus.created_at)}</p>
                       </div>
-                      <button
-                        onClick={() => startEditing(bonus)}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 text-text-muted hover:text-gold"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex shrink-0 gap-1.5">
+                        {bonus.status === "pending" && (
+                          <button
+                            onClick={() => handleMarkPaid(bonus)}
+                            disabled={markingPaidId === bonus.id}
+                            className="flex h-8 items-center gap-1.5 rounded-lg border border-success/20 px-2.5 text-xs text-success hover:bg-success/10"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {markingPaidId === bonus.id ? "Marking..." : "Mark Paid"}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => startEditing(bonus)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-text-muted hover:text-gold"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
