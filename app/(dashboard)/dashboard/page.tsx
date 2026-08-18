@@ -5,6 +5,7 @@ import { formatCurrency, formatDate, slugifyStatus } from "@/lib/utils";
 import AnimatedKpiCard from "@/components/dashboard/AnimatedKpiCard";
 import WelcomeHero from "@/components/dashboard/WelcomeHero";
 import PlanProgressCard from "@/components/dashboard/PlanProgressCard";
+import PortfolioBreakdown from "@/components/dashboard/PortfolioBreakdown";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
 import AnnouncementBanner from "@/components/dashboard/AnnouncementBanner";
 import Link from "next/link";
@@ -59,8 +60,23 @@ export default async function DashboardHomePage() {
     .slice()
     .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
   const latestSnapshot = sortedSnapshots[0];
-  const portfolioValue = latestSnapshot?.balance ?? 0;
+  const accountBalance = latestSnapshot?.balance ?? 0;
   const totalReturn = latestSnapshot?.return_percent ?? 0;
+
+  // Portfolio Value is a genuine combined total, not just the reconciled
+  // account balance alone -- per an explicit product decision, a client's
+  // headline number should reflect everything they actually have: their
+  // trading account balance (which itself already reflects deposits +
+  // performance, since that's what Reconciliation entries represent) PLUS
+  // any referral/bonus earnings that have actually been paid out. Earnings
+  // still marked "pending" are deliberately excluded from this total --
+  // only money that's actually been confirmed/paid counts toward the
+  // headline figure, matching how "Total Paid" already works on My
+  // Earnings elsewhere in the app.
+  const paidEarnings = (commissions ?? [])
+    .filter((c) => c.status === "paid")
+    .reduce((sum, c) => sum + Number(c.commission_earned), 0);
+  const portfolioValue = accountBalance + paidEarnings;
 
   const bonusEarned = (commissions ?? [])
     .filter((c) => c.status === "paid")
@@ -88,9 +104,11 @@ export default async function DashboardHomePage() {
         <AnimatedKpiCard icon={<Gift className="h-4 w-4" />} label="Referral Bonus Earned" value={formatCurrency(bonusEarned)} index={3} />
       </div>
 
+      <PortfolioBreakdown accountBalance={accountBalance} paidEarnings={paidEarnings} />
+
       <PerformanceChart snapshots={snapshots ?? []} />
 
-      <PlanProgressCard currentPlan={plan} allPlans={allPlans ?? []} currentBalance={portfolioValue} />
+      <PlanProgressCard currentPlan={plan} allPlans={allPlans ?? []} currentBalance={accountBalance} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="glass-card p-6">

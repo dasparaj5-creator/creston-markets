@@ -5,6 +5,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import KpiCard from "@/components/dashboard/KpiCard";
 import PerformanceChart from "@/components/dashboard/PerformanceChart";
 import AccountSummaryCard from "@/components/dashboard/AccountSummaryCard";
+import PortfolioBreakdown from "@/components/dashboard/PortfolioBreakdown";
 import RiskBanner from "@/components/shared/RiskBanner";
 import Link from "next/link";
 
@@ -12,12 +13,13 @@ export default async function PortfolioPage() {
   const profile = await requireUser();
   const supabase = createClient();
 
-  const [{ data: snapshots }, { data: plan }, { data: plans }] = await Promise.all([
+  const [{ data: snapshots }, { data: plan }, { data: plans }, { data: commissions }] = await Promise.all([
     supabase.from("portfolio_snapshots").select("*").eq("user_id", profile.id),
     profile.plan_id
-      ? supabase.from("plans").select("*").eq("id", profile.plan_id).single()
+      ? supabase.from("plans").select("*").eq("id", profile.plan_id).maybeSingle()
       : Promise.resolve({ data: null }),
     supabase.from("plans").select("*").eq("is_active", true).order("min_deposit"),
+    supabase.from("commission_records").select("commission_earned, status").eq("beneficiary_id", profile.id),
   ]);
 
   const sortedSnapshots = (snapshots ?? [])
@@ -25,6 +27,15 @@ export default async function PortfolioPage() {
     .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
   const latestSnapshot = sortedSnapshots[0];
   const hasLiveMt5 = sortedSnapshots.some((s) => s.source === "mt5_api");
+
+  // Same combined-total logic as the home dashboard, kept consistent
+  // across both pages so a client never sees two different "Portfolio
+  // Value" figures depending on which page they're looking at.
+  const accountBalance = latestSnapshot?.balance ?? 0;
+  const paidEarnings = (commissions ?? [])
+    .filter((c) => c.status === "paid")
+    .reduce((sum, c) => sum + Number(c.commission_earned), 0);
+  const portfolioValue = accountBalance + paidEarnings;
 
   return (
     <div className="space-y-6">
@@ -34,10 +45,12 @@ export default async function PortfolioPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(latestSnapshot?.balance ?? 0)} />
+        <KpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(portfolioValue)} />
         <KpiCard icon={TrendingUp} label="Total Return" value={`${(latestSnapshot?.return_percent ?? 0).toFixed(2)}%`} />
         <KpiCard icon={ArrowUpCircle} label="Current Plan" value={plan?.name ?? "None"} />
       </div>
+
+      <PortfolioBreakdown accountBalance={accountBalance} paidEarnings={paidEarnings} />
 
       <PerformanceChart snapshots={snapshots ?? []} />
       <RiskBanner variant="line" />
