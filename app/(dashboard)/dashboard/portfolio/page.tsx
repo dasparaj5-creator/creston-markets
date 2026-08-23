@@ -24,7 +24,11 @@ export default async function PortfolioPage() {
 
   const sortedSnapshots = (snapshots ?? [])
     .slice()
-    .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
+    .sort((a, b) => {
+      const dateDiff = new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   const latestSnapshot = sortedSnapshots[0];
   const hasLiveMt5 = sortedSnapshots.some((s) => s.source === "mt5_api");
 

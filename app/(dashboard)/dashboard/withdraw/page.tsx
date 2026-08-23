@@ -16,7 +16,11 @@ export default async function WithdrawPage() {
 
   const sortedSnapshots = (snapshots ?? [])
     .slice()
-    .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
+    .sort((a, b) => {
+      const dateDiff = new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   const availableBalance = sortedSnapshots[0]?.balance ?? 0;
 
   return (

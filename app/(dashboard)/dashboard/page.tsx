@@ -58,7 +58,20 @@ export default async function DashboardHomePage() {
 
   const sortedSnapshots = (snapshots ?? [])
     .slice()
-    .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime());
+    .sort((a, b) => {
+      // REAL BUG FIX: sorting by snapshot_date alone breaks when two
+      // entries share the same calendar date -- which genuinely happens,
+      // since a client's first-deposit approval auto-creates a same-day
+      // snapshot, and admin frequently enters a reconciliation update for
+      // that same day afterward. With no tiebreaker, the wrong entry
+      // (e.g. the auto-created $0 one) could be treated as "latest"
+      // depending on insertion order, silently showing stale/zeroed data.
+      // created_at as a tiebreaker ensures the ACTUAL most recently
+      // entered row always wins when dates tie.
+      const dateDiff = new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
   const latestSnapshot = sortedSnapshots[0];
   const accountBalance = latestSnapshot?.balance ?? 0;
   const totalReturn = latestSnapshot?.return_percent ?? 0;
