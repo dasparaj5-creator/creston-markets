@@ -2,7 +2,7 @@ import { AlertTriangle, Cpu } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
-import ReconciliationForm from "@/components/admin/ReconciliationForm";
+import SimpleReconciliationForm from "@/components/admin/SimpleReconciliationForm";
 
 export default async function ReconciliationPage() {
   const admin = await requireAdmin();
@@ -34,7 +34,7 @@ export default async function ReconciliationPage() {
         </p>
       </div>
 
-      <ReconciliationForm users={users ?? []} adminId={admin.id} />
+      <SimpleReconciliationForm users={users ?? []} adminId={admin.id} />
 
       {/* CSV bulk upload placeholder */}
       <div className="glass-card border-dashed border-white/20 p-6 text-center">
