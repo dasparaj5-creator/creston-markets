@@ -13,13 +13,14 @@ export default async function PortfolioPage() {
   const profile = await requireUser();
   const supabase = createClient();
 
-  const [{ data: snapshots }, { data: plan }, { data: plans }, { data: commissions }] = await Promise.all([
+  const [{ data: snapshots }, { data: plan }, { data: plans }, { data: commissions }, { data: approvedDeposits }] = await Promise.all([
     supabase.from("portfolio_snapshots").select("*").eq("user_id", profile.id),
     profile.plan_id
       ? supabase.from("plans").select("*").eq("id", profile.plan_id).maybeSingle()
       : Promise.resolve({ data: null }),
     supabase.from("plans").select("*").eq("is_active", true).order("min_deposit"),
     supabase.from("commission_records").select("commission_earned, status").eq("beneficiary_id", profile.id),
+    supabase.from("deposits").select("amount").eq("user_id", profile.id).eq("status", "approved"),
   ]);
 
   const sortedSnapshots = (snapshots ?? [])
@@ -41,6 +42,16 @@ export default async function PortfolioPage() {
     .reduce((sum, c) => sum + Number(c.commission_earned), 0);
   const portfolioValue = accountBalance + paidEarnings;
 
+  // Cumulative return against deposits, matching the home dashboard.
+  // See the note there: return_percent holds a single period's rate,
+  // not a lifetime total, so it must not be shown as "Total Return".
+  const totalDeposits = (approvedDeposits ?? []).reduce(
+    (sum, d) => sum + Number(d.amount),
+    0
+  );
+  const totalReturn =
+    totalDeposits > 0 ? ((accountBalance - totalDeposits) / totalDeposits) * 100 : 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,7 +61,7 @@ export default async function PortfolioPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <KpiCard icon={Wallet} label="Portfolio Value" value={formatCurrency(portfolioValue)} />
-        <KpiCard icon={TrendingUp} label="Total Return" value={`${(latestSnapshot?.return_percent ?? 0).toFixed(2)}%`} />
+        <KpiCard icon={TrendingUp} label="Total Return" value={`${totalReturn.toFixed(2)}%`} />
         <KpiCard icon={ArrowUpCircle} label="Current Plan" value={plan?.name ?? "None"} />
       </div>
 

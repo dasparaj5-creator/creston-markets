@@ -24,7 +24,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/groups", label: "Client Groups", icon: UsersRound },
-  { href: "/admin/bulk-earnings", label: "Bulk Earnings Update", icon: Send },
+  { href: "/admin/bulk-earnings", label: "Weekly Earnings", icon: Send },
   { href: "/admin/reconciliation", label: "Reconciliation", icon: Database },
   { href: "/admin/referrals", label: "Referral Bonuses", icon: Gift },
   { href: "/admin/approvals", label: "Approvals", icon: CheckSquare },
