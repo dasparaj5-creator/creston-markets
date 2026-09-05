@@ -19,6 +19,7 @@ export default async function DashboardHomePage() {
     { data: allPlans },
     { data: snapshots },
     { data: recentTx },
+    { data: approvedDeposits },
     { data: commissions },
     { data: announcements },
     { count: directReferralCount },
@@ -34,6 +35,14 @@ export default async function DashboardHomePage() {
         .eq("user_id", profile.id)
         .order("created_at", { ascending: false })
         .limit(5),
+      // Every approved deposit, used as the cost basis for Total Return.
+      // Separate from recentTx above, which is capped at 5 rows and
+      // includes pending/rejected deposits for the activity list.
+      supabase
+        .from("deposits")
+        .select("amount")
+        .eq("user_id", profile.id)
+        .eq("status", "approved"),
       // Pulls from commission_records (the real, current 5-layer engine),
       // not the legacy referral_bonuses table -- this widget previously
       // showed stale numbers from the old single-tier system, unrelated
@@ -74,7 +83,21 @@ export default async function DashboardHomePage() {
     });
   const latestSnapshot = sortedSnapshots[0];
   const accountBalance = latestSnapshot?.balance ?? 0;
-  const totalReturn = latestSnapshot?.return_percent ?? 0;
+
+  // Total Return is cumulative: how much the client's balance has grown
+  // against everything they put in. It is NOT return_percent from the
+  // latest snapshot -- that column holds the rate for a SINGLE period
+  // (one weekly reconciliation entry), so showing it here labelled
+  // "Total Return" understated every client's actual return and got
+  // further from the truth with each weekly entry added. Deriving it
+  // from balance vs deposits also fixes historical rows for free,
+  // rather than needing a backfill.
+  const totalDeposits = (approvedDeposits ?? []).reduce(
+    (sum, d) => sum + Number(d.amount),
+    0
+  );
+  const totalReturn =
+    totalDeposits > 0 ? ((accountBalance - totalDeposits) / totalDeposits) * 100 : 0;
 
   // Portfolio Value is a genuine combined total, not just the reconciled
   // account balance alone -- per an explicit product decision, a client's
